@@ -1,4 +1,5 @@
 # RGO
+RGO 目前处于 MVP 阶段
 
 # 运行步骤
 
@@ -6,6 +7,13 @@
 
 ```shell
 go install github.com/cloudwego-contrib/rgo@latest
+```
+
+
+## 启动 MySQL docker 服务
+
+```shell
+docker-compose up
 ```
 
 ## 修改 MySQL 地址
@@ -16,12 +24,6 @@ go install github.com/cloudwego-contrib/rgo@latest
 export RGO_MYSQL_DSN="gorm:gorm@tcp(localhost:3306)/gorm?charset=utf8&parseTime=True&loc=Local"
 ```
 
-## 启动 MySQL docker 服务
-
-```shell
-docker-compose up
-```
-
 ## 准备公共结构体
 
 - 目前准备了一份远程测试结构体 `github.com/chaoranz758/rgo_struct` 。
@@ -29,5 +31,9 @@ docker-compose up
 
 ## 启动 Server Example
 
+```shell
+cd examples/server
+go run -a -toolexec rgo main.go
+```
 
 ## 启动 Client Example

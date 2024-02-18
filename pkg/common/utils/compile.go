@@ -44,7 +44,7 @@ func BuildDependence(genGoFilePath, genExePath, genTxtPath, code string) error {
 	}
 	b001 := path.Join(strings.TrimPrefix(strings.TrimSpace(string(output)), "WORK="), "b001")
 
-	f, err := os.OpenFile(genTxtPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile(genTxtPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o777)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func MergeImportCfg(genTxtPath, originalCfg, cfg string, isCompilePhase bool) er
 		return res
 	}
 
-	f, err := os.OpenFile(originalCfg, os.O_RDWR|os.O_APPEND, 0o644)
+	f, err := os.OpenFile(originalCfg, os.O_RDWR|os.O_APPEND, 0o777)
 	if err != nil {
 		return err
 	}

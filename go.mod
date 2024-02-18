@@ -3,7 +3,6 @@ module github.com/cloudwego-contrib/rgo
 go 1.18
 
 require (
-	github.com/chaoranz758/rgo_struct v0.0.0-20240217063408-8be4dffe092c
 	github.com/cloudwego/thriftgo v0.3.6
 	golang.org/x/tools v0.18.0
 	gorm.io/driver/mysql v1.5.4

@@ -178,7 +178,7 @@ func (tf *ThriftFile) Generate(genPath string) (string, error) {
 	}
 	data += "}"
 
-	if err := os.WriteFile(genPath, []byte(data), 0o644); err != nil {
+	if err := os.WriteFile(genPath, []byte(data), 0o777); err != nil {
 		return "", fmt.Errorf("generate thrift idl %v failed, err: %v", genPath, err)
 	}
 

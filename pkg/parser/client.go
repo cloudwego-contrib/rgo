@@ -103,7 +103,7 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				cliGenDir := filepath.Join(arg.TempDir, "client", serviceName)
 
 				// generate cliGenDir
-				if err = os.MkdirAll(cliGenDir, 0o644); err != nil {
+				if err = os.MkdirAll(cliGenDir, 0o777); err != nil {
 					return fmt.Errorf("mkdir dir %v failed, err: %v", cliGenDir, err)
 				}
 
@@ -114,7 +114,7 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 					return fmt.Errorf("judge path %v whether exists failed, err: %v", idlPath, err)
 				}
 				if !isExist {
-					if err = os.WriteFile(idlPath, []byte(sm.IdlContent), 0o644); err != nil {
+					if err = os.WriteFile(idlPath, []byte(sm.IdlContent), 0o777); err != nil {
 						return fmt.Errorf("write file %v failed, err: %v", idlPath, err)
 					}
 				}
@@ -219,7 +219,7 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				if err = format.Node(&buf, fSet, astFile); err != nil {
 					return fmt.Errorf("format ast file content failed, err: %v", err)
 				}
-				if err = os.WriteFile(newPath, buf.Bytes(), 0o644); err != nil {
+				if err = os.WriteFile(newPath, buf.Bytes(), 0o777); err != nil {
 					return fmt.Errorf("write file %v failed, err: %v", newPath, err)
 				}
 				filePaths[i] = newPath
@@ -293,7 +293,7 @@ func genInitClient(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift,
 	if err != nil {
 		return fmt.Errorf("render client go tpl failed, err: %v", err)
 	}
-	if err = os.WriteFile(filepath.Join(cliGenDir, "kitex_gen", "client.go"), []byte(data), 0o644); err != nil {
+	if err = os.WriteFile(filepath.Join(cliGenDir, "kitex_gen", "client.go"), []byte(data), 0o777); err != nil {
 		return fmt.Errorf("write file %v failed, err: %v", filepath.Join(cliGenDir, "kitex_gen", "client.go"), err)
 	}
 	return nil
@@ -339,7 +339,7 @@ func getCompileDependInfo(arg *cmd.Argument, isServer bool) (*compileDependInfo,
 		return nil, fmt.Errorf("judge path %v whether exists failed, err: %v", basePath, err)
 	}
 	if !isExist {
-		if err = os.MkdirAll(basePath, 0o644); err != nil {
+		if err = os.MkdirAll(basePath, 0o777); err != nil {
 			return nil, fmt.Errorf("mkdir dir %v failed, err: %v", basePath, err)
 		}
 	}

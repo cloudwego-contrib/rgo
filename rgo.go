@@ -59,6 +59,3 @@ func main() {
 		logs.Error(fmt.Sprintf("run toolchain err, chainName: %v, err: %v", arg.ChainName, err))
 	}
 }
-
-// Run flag
-func Run() {}

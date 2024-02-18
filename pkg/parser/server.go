@@ -92,7 +92,7 @@ func ParseServer(filePaths []string, arg *cmd.Argument) error {
 				if err = format.Node(&buf, fSet, astFile); err != nil {
 					return err
 				}
-				if err = os.WriteFile(newPath, buf.Bytes(), 0o644); err != nil {
+				if err = os.WriteFile(newPath, buf.Bytes(), 0o777); err != nil {
 					return err
 				}
 				filePaths[i] = newPath
@@ -166,7 +166,7 @@ func ParseServer(filePaths []string, arg *cmd.Argument) error {
 	if len(funcMap) != 0 {
 		// generate thrift idl content
 		idlPath := filepath.Join(srvGenDir, strings.ReplaceAll(recordPsm, ".", "_")+".thrift")
-		if err := os.MkdirAll(filepath.Dir(idlPath), 0o644); err != nil {
+		if err := os.MkdirAll(filepath.Dir(idlPath), 0o777); err != nil {
 			return err
 		}
 		idlContent, err := tf.Generate(idlPath)
@@ -268,10 +268,10 @@ func replaceHandlerBody(funcMap map[string]*funcDepenInfo, handlerPath string) e
 	if err = format.Node(&buf, fSet, handlerFile); err != nil {
 		return err
 	}
-	if err = os.MkdirAll(filepath.Join(filepath.Dir(handlerPath), "handler"), 0o644); err != nil {
+	if err = os.MkdirAll(filepath.Join(filepath.Dir(handlerPath), "handler"), 0o777); err != nil {
 		return err
 	}
-	if err = os.WriteFile(filepath.Join(filepath.Dir(handlerPath), "handler", "handler.go"), buf.Bytes(), 0o644); err != nil {
+	if err = os.WriteFile(filepath.Join(filepath.Dir(handlerPath), "handler", "handler.go"), buf.Bytes(), 0o777); err != nil {
 		return err
 	}
 
@@ -464,7 +464,7 @@ func generateRecordTxt(arg *cmd.Argument, srvGenDir string, tf *transformer.Thri
 	})
 	depenPath := strings.ReplaceAll(filepath.Join(arg.GoMod, p, "kitex_gen", np, idlSrvNameLower), "\\", "/")
 	depenPath1 := strings.ReplaceAll(filepath.Join(arg.GoMod, p, "handler"), "\\", "/")
-	if err = os.WriteFile(filepath.Join(arg.TempDir, "server", "record.txt"), []byte(depenPath+" "+depenPath1+" "+implName), 0o644); err != nil {
+	if err = os.WriteFile(filepath.Join(arg.TempDir, "server", "record.txt"), []byte(depenPath+" "+depenPath1+" "+implName), 0o777); err != nil {
 		return fmt.Errorf("write file %v failed, err: %v", filepath.Join(arg.TempDir, "server", "record.txt"), err)
 	}
 	return nil

@@ -1,6 +1,4 @@
 github.com/apache/thrift v0.13.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
-github.com/chaoranz758/rgo_struct v0.0.0-20240217063408-8be4dffe092c h1:2Gbv5LFDU/MlitTOTrCjvRmCCSqwv9MoKb6subazU2I=
-github.com/chaoranz758/rgo_struct v0.0.0-20240217063408-8be4dffe092c/go.mod h1:jLvrCdveaYlKAv8gskNXilvKmhHS3l4+gi+X3Fj1+jE=
 github.com/cloudwego/thriftgo v0.3.6 h1:gHHW8Ag3cAEQ/awP4emTJiRPr5yQjbANhcsmV8/Epbw=
 github.com/cloudwego/thriftgo v0.3.6/go.mod h1:29ukiySoAMd0vXMYIduAY9dph/7dmChvOS11YLotFb8=
 github.com/dlclark/regexp2 v1.10.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
