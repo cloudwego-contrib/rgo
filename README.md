@@ -9,6 +9,13 @@ RGO 目前处于 MVP 阶段
 go install github.com/cloudwego-contrib/rgo@latest
 ```
 
+
+## 启动 MySQL docker 服务
+
+```shell
+docker-compose up
+```
+
 ## 修改 MySQL 地址
 
 目前支持通过环境变量设置 MySQL 地址，使用内置 docker 可忽略此步骤。
@@ -39,7 +46,11 @@ export RGO_MYSQL_DSN="gorm:gorm@tcp(localhost:3306)/gorm?charset=utf8&parseTime=
 
 ```shell
 cd examples/server
+<<<<<<< HEAD
 go run -toolexec rgo main.go
+=======
+go run -a -toolexec rgo main.go
+>>>>>>> 6e1f876 (feat: modify file permission)
 ```
 
 效果:
