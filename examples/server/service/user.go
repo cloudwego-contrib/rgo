@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudwego-contrib/rgo/examples/remote_struct/user"
+	"github.com/chaoranz758/rgo_struct/user"
 )
 
 // rgo:server:codehub:dns:user_service

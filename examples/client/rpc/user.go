@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 
-	"github.com/cloudwego-contrib/rgo/examples/remote_struct/user"
+	"github.com/chaoranz758/rgo_struct/user"
 )
 
 // rgo:client:codehub:dns:user_service@v1

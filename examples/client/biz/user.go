@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chaoranz758/rgo_struct/user"
 	"github.com/cloudwego-contrib/rgo/examples/client/rpc"
-	"github.com/cloudwego-contrib/rgo/examples/remote_struct/user"
 )
 
 func Biz() {

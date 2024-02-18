@@ -1,3 +1,0 @@
-package rgo
-
-func Run() {}

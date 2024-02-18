@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cloudwego-contrib/rgo/examples/server/rgo"
+	"github.com/cloudwego-contrib/rgo/cmd/rgo"
 
 	// 注意的点：需要匿名引一下
 	// todo 强制写到 main 里
