@@ -23,13 +23,10 @@ var BaseClientDependence = map[string]struct{}{
 	"github.com/cloudwego/kitex/client/callopt": {},
 }
 
-var BaseSrvMainDependence = map[string]struct{}{
+var BaseSrvDependence = map[string]struct{}{
+	"unsafe":                            {},
 	"net":                               {},
 	"github.com/cloudwego/kitex/server": {},
-}
-
-var BaseSrvHandlerDependence = map[string]struct{}{
-	"unsafe": {},
 }
 
 func AddDependence(dependenceMap map[string]struct{}, dependence []string) {

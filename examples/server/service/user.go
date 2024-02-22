@@ -8,7 +8,6 @@ import (
 	"github.com/chaoranz758/rgo_struct/user"
 )
 
-// rgo:server:codehub:dns:user_service
 func CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.CreateUserResponse, error) {
 	fmt.Printf("create service success, username: %v, password: %v", req.Username, req.Password)
 	return &user.CreateUserResponse{BaseResp: &user.BaseResp{
@@ -18,7 +17,6 @@ func CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.CreateU
 	}}, nil
 }
 
-// rgo:server:codehub:dns:user_service
 func MGetUser(ctx context.Context, req *user.MGetUserRequest) (*user.MGetUserResponse, error) {
 	fmt.Printf("mget service process...")
 	fmt.Printf("mget service success")

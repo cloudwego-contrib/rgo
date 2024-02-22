@@ -48,9 +48,10 @@ func main() {
 		if err := compile.Link(arg); err != nil {
 			logs.Error(err)
 		}
+		// todo delete temp dir
 	}
 
-	// build
+	// execute compile or link command
 	c := exec.Command(arg.ChainName, arg.ChainArgs...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr

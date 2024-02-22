@@ -33,7 +33,6 @@ type Argument struct {
 	Verbose bool
 
 	// go build args
-	ToolPath  string
 	ChainName string
 	ChainArgs []string
 
@@ -61,7 +60,6 @@ func (a *Argument) Init() error {
 		logs.Log.Level = logs.LevelWarn
 	}
 
-	a.ToolPath = os.Args[0]
 	goToolDir := os.Getenv("GOTOOLDIR")
 	if goToolDir == "" {
 		return errors.New("env key `GOTOOLDIR` not found")
@@ -87,7 +85,7 @@ func (a *Argument) Init() error {
 	a.Cwd = cwd
 
 	// get tempDir
-	a.TempDir = path.Join(path.Join(cwd, "temp"), "gobuild_rgo_works")
+	a.TempDir = path.Join(cwd, "temp")
 
 	return nil
 }

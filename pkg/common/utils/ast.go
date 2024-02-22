@@ -19,10 +19,12 @@ package utils
 import (
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/token"
-	"path/filepath"
-
 	"golang.org/x/tools/go/ast/astutil"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func AppendImports(fSet *token.FileSet, astFile *ast.File, imp []string) {
@@ -46,34 +48,6 @@ func AppendImports(fSet *token.FileSet, astFile *ast.File, imp []string) {
 	}
 }
 
-func DeleteImport(fSet *token.FileSet, astFile *ast.File, imp string) {
-	flag := false
-	ast.Inspect(astFile, func(n ast.Node) bool {
-		if importSpec, ok := n.(*ast.ImportSpec); ok && importSpec.Path.Value == imp {
-			flag = true
-			return false
-		}
-		return true
-	})
-
-	if flag == false {
-		astutil.DeleteImport(fSet, astFile, imp)
-	}
-}
-
-func ReplaceFuncBody(targetFunc *ast.FuncDecl, funcBody string) {
-	targetFunc.Body = &ast.BlockStmt{
-		List: []ast.Stmt{
-			&ast.ExprStmt{
-				X: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: funcBody,
-				},
-			},
-		},
-	}
-}
-
 func GetImportPath(pkgName string, astFile *ast.File) (string, error) {
 	importValue := ""
 	ast.Inspect(astFile, func(n ast.Node) bool {
@@ -91,4 +65,106 @@ func GetImportPath(pkgName string, astFile *ast.File) (string, error) {
 		return "", fmt.Errorf("can not find %v's import path", pkgName)
 	}
 	return importValue, nil
+}
+
+func GetFunction(funcName string, astFile *ast.File) *ast.FuncDecl {
+	var funcDec *ast.FuncDecl
+	ast.Inspect(astFile, func(n ast.Node) bool {
+		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Name.Name == funcName {
+			funcDec = funcDecl
+			return false
+		}
+		return true
+	})
+	return funcDec
+}
+
+func ReplaceFuncBody(targetFunc *ast.FuncDecl, funcBody string) {
+	targetFunc.Body = &ast.BlockStmt{
+		List: []ast.Stmt{
+			&ast.ExprStmt{
+				X: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: funcBody,
+				},
+			},
+		},
+	}
+}
+
+func GetAstFileByStructName(searchPath, name string) (*ast.File, *ast.StructType, error) {
+	files, err := os.ReadDir(searchPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var file *ast.File
+	var st *ast.StructType
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".go") {
+			p := filepath.Join(searchPath, f.Name())
+			fSet := token.NewFileSet()
+			astFile, err := parser.ParseFile(fSet, p, nil, parser.ParseComments)
+			if err != nil {
+				return nil, nil, err
+			}
+			st = getStruct(name, astFile)
+			if st != nil {
+				file = astFile
+				break
+			}
+		}
+	}
+
+	if st == nil {
+		return nil, nil, fmt.Errorf("can not find struct %v", name)
+	}
+
+	return file, st, nil
+}
+
+func getStruct(name string, astFile *ast.File) *ast.StructType {
+	var ty *ast.StructType
+	ast.Inspect(astFile, func(n ast.Node) bool {
+		if spec, ok := n.(*ast.TypeSpec); ok && spec.Name.Name == name {
+			if t, ok := spec.Type.(*ast.StructType); ok {
+				ty = t
+				return false
+			}
+			return true
+		}
+		return true
+	})
+	return ty
+}
+
+func GetAstFileByFuncName(searchPath, name string) (*ast.File, error) {
+	files, err := os.ReadDir(searchPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var file *ast.File
+	var fun *ast.FuncDecl
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".go") {
+			p := filepath.Join(searchPath, f.Name())
+			fSet := token.NewFileSet()
+			astFile, err := parser.ParseFile(fSet, p, nil, parser.ParseComments)
+			if err != nil {
+				return nil, err
+			}
+			fun = GetFunction(name, astFile)
+			if fun != nil {
+				file = astFile
+				break
+			}
+		}
+	}
+
+	if fun == nil {
+		return nil, fmt.Errorf("can not find function %v", name)
+	}
+
+	return file, nil
 }
