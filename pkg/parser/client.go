@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/pkg/transformer"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -56,11 +57,11 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				psm          string
 			)
 
-			// find `rgo:client` flag and record
+			// find `rgo:` flag and record
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
 				if funcDecl.Doc != nil && strings.Contains(funcDecl.Doc.Text(), consts.RgoClient) {
 					// check and parse function comments and extract service_name, version
-					sliceComment, err = checkAndParseComment(funcDecl.Doc.Text(), false)
+					sliceComment, err = checkAndParseComment(funcDecl.Doc.Text())
 					if err != nil {
 						return err
 					}
@@ -70,7 +71,7 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 
 			if funcDec != nil {
 				// check grammar errors and parse function name, params info and returns info to AstFuncInfo struct
-				funcInfo, err := checkAndParseFunc(funcDec)
+				funcInfo, err := checkAndParseFunc(funcDec, astFile.Name.Name)
 				if err != nil {
 					return fmt.Errorf("check and parse function failed, err: %v", err)
 				}
@@ -78,18 +79,19 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				// get server version and psm based on comments
 				version := ""
 				var sm *db.ServerManage
-				if strings.Contains(sliceComment[4], "@") {
+				if strings.Contains(sliceComment[1], "@") {
 					// user specifies server version
-					version = strings.Split(sliceComment[4], "@")[1]
-					psm = strings.Split(sliceComment[4], "@")[0]
+					version = strings.Split(sliceComment[1], "@")[1]
+					psm = strings.Split(sliceComment[1], "@")[0]
 				} else {
 					// user does not specify server version, default latest
 					// get latest version by service name from db
-					if err = db.GetLastSMByServiceName(context.Background(), sliceComment[2], sm); err != nil {
+					sm = new(db.ServerManage)
+					if err = db.GetLastSMByServiceName(context.Background(), sliceComment[1], sm); err != nil {
 						return fmt.Errorf("get latest version from db failed, err: %v", err)
 					}
 					version = sm.ServerVersion
-					psm = sliceComment[4]
+					psm = sliceComment[1]
 				}
 				if sm == nil {
 					// called when the user specifies a version
@@ -103,13 +105,19 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				cliGenDir := filepath.Join(arg.TempDir, "client", serviceName)
 
 				// generate cliGenDir
-				if err = os.MkdirAll(cliGenDir, 0o777); err != nil {
-					return fmt.Errorf("mkdir dir %v failed, err: %v", cliGenDir, err)
+				isExist, err := utils.PathExist(cliGenDir)
+				if err != nil {
+					return fmt.Errorf("judge path %v whether exists failed, err: %v", idlPath, err)
+				}
+				if !isExist {
+					if err = os.MkdirAll(cliGenDir, 0o777); err != nil {
+						return fmt.Errorf("mkdir dir %v failed, err: %v", cliGenDir, err)
+					}
 				}
 
 				// write idl to disk
 				idlPath = filepath.Join(cliGenDir, serviceName+".thrift")
-				isExist, err := utils.PathExist(idlPath)
+				isExist, err = utils.PathExist(idlPath)
 				if err != nil {
 					return fmt.Errorf("judge path %v whether exists failed, err: %v", idlPath, err)
 				}
@@ -119,16 +127,23 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 					}
 				}
 
-				// get remote request and response structure information
-				stReqInfo, err := getRemoteStructInfo(strings.Split(funcInfo.Params[1].Type, ".")[0][1:],
-					arg.GoModPath, astFile)
+				reqParam := funcInfo.params[1]
+				respParam := funcInfo.returns[0]
+				// parse request structure and check if the versions are consistent
+				stReq, _, err := getParsedStruct(&reqParam, arg, astFile, filepath.Dir(fileP))
 				if err != nil {
-					return err
+					return fmt.Errorf("parse struct %v failed, err: %v", reqParam.pType, err)
 				}
-				stRespInfo, err := getRemoteStructInfo(strings.Split(funcInfo.Returns[0].Type, ".")[0][1:],
-					arg.GoModPath, astFile)
+				if checkStructConsist(stReq, sm.IdlContent) == false {
+					return fmt.Errorf("client struct inconsistent with server")
+				}
+				// parse response structure and check if the versions are consistent
+				stResp, _, err := getParsedStruct(&respParam, arg, astFile, filepath.Dir(fileP))
 				if err != nil {
-					return err
+					return fmt.Errorf("parse struct %v failed, err: %v", reqParam.pType, err)
+				}
+				if checkStructConsist(stResp, sm.IdlContent) == false {
+					return fmt.Errorf("client struct inconsistent with server")
 				}
 
 				// parse thrift idl
@@ -143,31 +158,17 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 				// generate one service by default
 				hasTargetFunc := false
 				for _, fun := range astTree.Services[0].Functions {
-					if fun.Name == funcInfo.FuncName {
+					if fun.Name == funcInfo.funcName {
 						idlReqType := fun.Arguments[0].Type.Name
 						idlRespType := fun.FunctionType.Name
-						if !strings.Contains(funcInfo.Params[1].Type, idlReqType) {
-							return errors.New("the specified request type does not exist")
-						}
-						if !strings.Contains(funcInfo.Returns[0].Type, idlRespType) {
-							return errors.New("the specified response type does not exist")
-						}
+
 						var reqSt *thriftgo_parser.StructLike
 						var respSt *thriftgo_parser.StructLike
 						for _, st := range astTree.Structs {
 							if st.Name == idlReqType {
-								// omit `// `
-								if st.ReservedComments[3:] != stReqInfo.repoImportPath+" "+stReqInfo.version {
-									return fmt.Errorf("remote repository structure's version inconsistency, "+
-										"expected: %v, actually: %v", st.ReservedComments[3:], stReqInfo.repoImportPath+" "+stReqInfo.version)
-								}
 								reqSt = st
 							}
 							if st.Name == idlRespType {
-								if st.ReservedComments[3:] != stRespInfo.repoImportPath+" "+stRespInfo.version {
-									return fmt.Errorf("remote repository structure's version inconsistency, "+
-										"expected: %v, actually: %v", st.ReservedComments[3:], stReqInfo.repoImportPath+" "+stReqInfo.version)
-								}
 								respSt = st
 							}
 						}
@@ -237,6 +238,29 @@ func ParseClient(filePaths []string, arg *cmd.Argument) error {
 	return nil
 }
 
+func checkStructConsist(st *transformer.Struct, idlContent string) bool {
+	if !strings.Contains(idlContent, st.GenerateSingle()) {
+		return false
+	}
+	for _, field := range st.StructFields {
+		if len(field.RelevantStructs) != 0 {
+			for _, subSt := range field.RelevantStructs {
+				if !checkStructConsist(subSt, idlContent) {
+					return false
+				}
+			}
+		}
+		if len(field.RelevantEnums) != 0 {
+			for _, subEnum := range field.RelevantEnums {
+				if !strings.Contains(idlContent, subEnum.Generate()) {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
 type cliDependImportPath struct {
 	idlSrvNameLower  string
 	namespacePath    string
@@ -287,7 +311,7 @@ func genInitClient(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift,
 		},
 		IdlSrvNameLower: depend.idlSrvNameLower,
 		Psm:             psm,
-		IdlFileName:     astTree.Services[0].Name,
+		IdlFileName:     strings.ToUpper(astTree.Services[0].Name),
 	}
 	data, err := cliTpl.Render()
 	if err != nil {
@@ -299,16 +323,21 @@ func genInitClient(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift,
 	return nil
 }
 
-func replaceClientFuncBody(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift, funcInfo *AstFuncInfo,
-	fSet *token.FileSet, astFile *ast.File, funcDec *ast.FuncDecl,
-) error {
+func replaceClientFuncBody(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift, funcInfo *astFuncInfo,
+	fSet *token.FileSet, astFile *ast.File, funcDec *ast.FuncDecl) error {
+	respType := ""
+	if funcInfo.returns[0].isSamePkg {
+		respType = "*" + strings.Split(funcInfo.returns[0].pType, ".")[1]
+	} else {
+		respType = funcInfo.returns[0].pType
+	}
 	funcBody := tpl.ClientFuncBody{
-		ClientName:      astTree.Services[0].Name + "Client",
-		FuncName:        funcInfo.FuncName,
-		FirstParamName:  funcInfo.Params[0].Name,
-		SecondParamName: funcInfo.Params[1].Name,
-		RealReqType:     "*" + filepath.Base(depend.namespacePath) + "." + strings.Split(funcInfo.Params[1].Type, ".")[1],
-		NeedRespType:    funcInfo.Returns[0].Type,
+		ClientName:      strings.ToUpper(astTree.Services[0].Name) + "Client",
+		FuncName:        funcInfo.funcName,
+		FirstParamName:  funcInfo.params[0].name,
+		SecondParamName: funcInfo.params[1].name,
+		RealReqType:     "*" + filepath.Base(depend.namespacePath) + "." + strings.Split(funcInfo.params[1].pType, ".")[1],
+		NeedRespType:    respType,
 	}
 	body, err := funcBody.Render()
 	if err != nil {

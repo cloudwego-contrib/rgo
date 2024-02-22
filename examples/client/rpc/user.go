@@ -6,7 +6,7 @@ import (
 	"github.com/chaoranz758/rgo_struct/user"
 )
 
-// rgo:client:codehub:dns:user_service@v1
+// rgo:user_service
 func CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.CreateUserResponse, error) {
 	return nil, nil
 }

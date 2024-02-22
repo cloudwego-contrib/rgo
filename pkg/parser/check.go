@@ -25,24 +25,21 @@ import (
 	"github.com/cloudwego-contrib/rgo/pkg/common/consts"
 )
 
-type AstFuncInfo struct {
-	FuncName string
-	Params   []Param
-	Returns  []Param
+type astFuncInfo struct {
+	funcName string
+	params   []param
+	returns  []param
 }
 
-type Param struct {
-	Name string
-	Type string
+type param struct {
+	isSamePkg bool
+	name      string
+	pType     string
 }
 
-func checkAndParseComment(s string, isServer bool) (result []string, err error) {
+func checkAndParseComment(s string) (result []string, err error) {
 	index := -1
-	if isServer {
-		index = strings.Index(s, consts.RgoServer)
-	} else {
-		index = strings.Index(s, consts.RgoClient)
-	}
+	index = strings.Index(s, consts.RgoClient)
 	lastIndex := -1
 	for i := index; i < len(s); i++ {
 		if string(s[i]) == "\n" {
@@ -53,31 +50,32 @@ func checkAndParseComment(s string, isServer bool) (result []string, err error) 
 		lastIndex = len(s)
 	}
 	result = strings.Split(s[index:lastIndex], ":")
-	if len(result) != 5 {
+	if len(result) != 2 {
 		return nil, fmt.Errorf("has grammar errors in %v", s)
 	}
 	return result, nil
 }
 
-func checkAndParseFunc(targetFunc *ast.FuncDecl) (*AstFuncInfo, error) {
-	info := &AstFuncInfo{
-		FuncName: targetFunc.Name.Name,
+func checkAndParseFunc(targetFunc *ast.FuncDecl, pkgName string) (*astFuncInfo, error) {
+	info := &astFuncInfo{
+		funcName: targetFunc.Name.Name,
 	}
 
 	// check and parse params
 	if len(targetFunc.Type.Params.List) != 2 {
 		return nil, errors.New("must specify 2 params")
 	}
-	params := make([]Param, 2)
-	for index, param := range targetFunc.Type.Params.List {
-		if param.Names == nil {
+	ps := make([]param, 2)
+	for index, p := range targetFunc.Type.Params.List {
+		if p.Names == nil {
 			return nil, errors.New("must specify param name")
 		}
 		t := ""
+		isSamePkg := false
 
 		// context.Context
 		if index == 0 {
-			ctxType, ok := param.Type.(*ast.SelectorExpr)
+			ctxType, ok := p.Type.(*ast.SelectorExpr)
 			if !ok {
 				return nil, errors.New("the first param must be context.Context")
 			}
@@ -93,24 +91,30 @@ func checkAndParseFunc(targetFunc *ast.FuncDecl) (*AstFuncInfo, error) {
 
 		// req
 		if index == 1 {
-			reqType, ok := param.Type.(*ast.StarExpr)
+			reqType, ok := p.Type.(*ast.StarExpr)
 			if !ok {
 				return nil, errors.New("the second param must be star type")
 			}
-			reqXType, ok := reqType.X.(*ast.SelectorExpr)
-			if !ok {
-				return nil, errors.New("the second param must be *{packageName}.{StructType}")
+			if reqXType, ok := reqType.X.(*ast.Ident); ok {
+				// call within package
+				t = "*" + pkgName + "." + reqXType.Name
+				isSamePkg = true
+			} else if reqXType, ok := reqType.X.(*ast.SelectorExpr); ok {
+				// call outside of package, maybe local or remote
+				reqXXType, ok := reqXType.X.(*ast.Ident)
+				if !ok {
+					return nil, errors.New("the second param must be *{packageName}.{StructType}")
+				}
+				t = "*" + reqXXType.Name + "." + reqXType.Sel.Name
+			} else {
+				return nil, fmt.Errorf("unsupported struct type in function %v", info.funcName)
 			}
-			reqXXType, ok := reqXType.X.(*ast.Ident)
-			if !ok {
-				return nil, errors.New("the second param must be *{packageName}.{StructType}")
-			}
-			t = "*" + reqXXType.Name + "." + reqXType.Sel.Name
 		}
 
-		params[index] = Param{
-			Name: param.Names[0].Name,
-			Type: t,
+		ps[index] = param{
+			name:      p.Names[0].Name,
+			pType:     t,
+			isSamePkg: isSamePkg,
 		}
 	}
 
@@ -118,30 +122,36 @@ func checkAndParseFunc(targetFunc *ast.FuncDecl) (*AstFuncInfo, error) {
 	if len(targetFunc.Type.Results.List) != 2 {
 		return nil, errors.New("must specify 2 returns")
 	}
-	returns := make([]Param, 2)
-	for index, param := range targetFunc.Type.Results.List {
+	returns := make([]param, 2)
+	for index, p := range targetFunc.Type.Results.List {
 		t := ""
+		isSamePkg := false
 
 		// resp
 		if index == 0 {
-			respType, ok := param.Type.(*ast.StarExpr)
+			respType, ok := p.Type.(*ast.StarExpr)
 			if !ok {
 				return nil, errors.New("the first return param must be star type")
 			}
-			respXType, ok := respType.X.(*ast.SelectorExpr)
-			if !ok {
-				return nil, errors.New("the first return param must be *{packageName}.{StructType}")
+			if respXType, ok := respType.X.(*ast.Ident); ok {
+				// call within package
+				t = "*" + pkgName + "." + respXType.Name
+				isSamePkg = true
+			} else if respXType, ok := respType.X.(*ast.SelectorExpr); ok {
+				// call outside of package, maybe local or remote
+				respXXType, ok := respXType.X.(*ast.Ident)
+				if !ok {
+					return nil, errors.New("the first return param must be *{packageName}.{StructType}")
+				}
+				t = "*" + respXXType.Name + "." + respXType.Sel.Name
+			} else {
+				return nil, fmt.Errorf("unsupported struct type in function %v", info.funcName)
 			}
-			respXXType, ok := respXType.X.(*ast.Ident)
-			if !ok {
-				return nil, errors.New("the first return param must be *{packageName}.{StructType}")
-			}
-			t = "*" + respXXType.Name + "." + respXType.Sel.Name
 		}
 
-		// req
+		// error
 		if index == 1 {
-			errType, ok := param.Type.(*ast.Ident)
+			errType, ok := p.Type.(*ast.Ident)
 			if !ok {
 				return nil, errors.New("the second return param must be error")
 			}
@@ -151,16 +161,17 @@ func checkAndParseFunc(targetFunc *ast.FuncDecl) (*AstFuncInfo, error) {
 		}
 
 		name := ""
-		if param.Names != nil {
-			name = param.Names[0].Name
+		if p.Names != nil {
+			name = p.Names[0].Name
 		}
-		returns[index] = Param{
-			Name: name,
-			Type: t,
+		returns[index] = param{
+			name:      name,
+			pType:     t,
+			isSamePkg: isSamePkg,
 		}
 	}
 
-	info.Params = params
-	info.Returns = returns
+	info.params = ps
+	info.returns = returns
 	return info, nil
 }

@@ -65,7 +65,6 @@ type ThriftFile struct {
 
 type Struct struct {
 	Name         string
-	Comment      string // record version
 	StructFields []*StructField
 }
 
@@ -114,61 +113,12 @@ func (tf *ThriftFile) Generate(genPath string) (string, error) {
 	// generate namespace
 	data := "namespace go " + tf.Namespace + "\n\n"
 
-	// generate root structs
-	preEnums := make([]*Enum, 0, 10)
-	preStructs := make([]*Struct, 0, 20)
-	for _, st := range tf.Structs {
-		if st.Comment != "" {
-			data += "// " + st.Comment + "\n"
-		}
-		data += "struct " + st.Name + " {\n"
-		for index, field := range st.StructFields {
-			if field.Tag != "" {
-				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + " (" + field.Tag + ");\n"
-			} else {
-				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + "\n"
-			}
-			if len(field.RelevantEnums) != 0 {
-				for _, enum := range field.RelevantEnums {
-					if _, ok := tf.enumMap[enum.Name]; !ok {
-						tf.enumMap[enum.Name] = struct{}{}
-						preEnums = append(preEnums, enum)
-					}
-				}
-			}
-			if len(field.RelevantStructs) != 0 {
-				for _, stt := range field.RelevantStructs {
-					if _, ok := tf.structMap[stt.Name]; !ok {
-						tf.structMap[stt.Name] = struct{}{}
-						preStructs = append(preStructs, stt)
-					}
-				}
-			}
-		}
-		data += "}\n\n"
-		tf.structMap[st.Name] = struct{}{}
-	}
-
 	// generate structs
-	for _, st := range preStructs {
-		data += "struct " + st.Name + " {\n"
-		for index, field := range st.StructFields {
-			if field.Tag != "" {
-				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + " (" + field.Tag + ");\n"
-			} else {
-				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + "\n"
-			}
+	for _, st := range tf.Structs {
+		if _, ok := tf.structMap[st.Name]; !ok {
+			data += st.Generate(tf.structMap, tf.enumMap)
+			tf.structMap[st.Name] = struct{}{}
 		}
-		data += "}\n\n"
-	}
-
-	// generate enums
-	for _, enum := range preEnums {
-		data += "enum " + enum.Name + " {\n"
-		for _, field := range enum.EnumFields {
-			data += "\t" + field.Name + " = " + field.Value + ";\n"
-		}
-		data += "}\n\n"
 	}
 
 	// generate service
@@ -185,18 +135,78 @@ func (tf *ThriftFile) Generate(genPath string) (string, error) {
 	return data, nil
 }
 
-func ConvertStruct(name, repoPath, repoImport, comment string, astFile *ast.File) (*Struct, error) {
-	t := getStruct(name, astFile)
-	if t == nil {
-		return nil, fmt.Errorf("can not find struct: %v", name)
+func (st *Struct) Generate(structMap map[string]struct{}, enumMap map[string]struct{}) string {
+	data := "struct " + st.Name + " {\n"
+	stDatas := make([]string, 0, 10)
+	enumDatas := make([]string, 0, 3)
+
+	if _, ok := structMap[st.Name]; !ok {
+		for index, field := range st.StructFields {
+			if field.Tag != "" {
+				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + " (" + field.Tag + ");\n"
+			} else {
+				data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + "\n"
+			}
+			if len(field.RelevantStructs) != 0 {
+				for _, subSt := range field.RelevantStructs {
+					if _, ok = structMap[field.Name]; !ok {
+						stDatas = append(stDatas, subSt.Generate(structMap, enumMap))
+						structMap[subSt.Name] = struct{}{}
+					}
+				}
+			}
+			if len(field.RelevantEnums) != 0 {
+				for _, subEnum := range field.RelevantEnums {
+					if _, ok = enumMap[field.Name]; !ok {
+						enumDatas = append(enumDatas, subEnum.Generate())
+						enumMap[subEnum.Name] = struct{}{}
+					}
+				}
+			}
+
+		}
+		structMap[st.Name] = struct{}{}
+	}
+	data += "}\n\n"
+
+	for _, stData := range stDatas {
+		data += stData
+	}
+	for _, enumData := range enumDatas {
+		data += enumData
 	}
 
+	return data
+}
+
+func (st *Struct) GenerateSingle() string {
+	data := "struct " + st.Name + " {\n"
+	for index, field := range st.StructFields {
+		if field.Tag != "" {
+			data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + " (" + field.Tag + ");\n"
+		} else {
+			data += "\t" + strconv.Itoa(index+1) + ": " + field.Type + " " + field.Name + "\n"
+		}
+	}
+	data += "}\n\n"
+	return data
+}
+
+func (enum *Enum) Generate() string {
+	data := "enum " + enum.Name + " {\n"
+	for _, field := range enum.EnumFields {
+		data += "\t" + field.Name + " = " + field.Value + ";\n"
+	}
+	data += "}\n\n"
+	return data
+}
+
+func ConvertStruct(name, repoPath, repoImport, curPath string, astSt *ast.StructType, astFile *ast.File) (*Struct, error) {
 	st := &Struct{
 		Name:         name,
-		Comment:      comment,
 		StructFields: []*StructField{},
 	}
-	for _, field := range t.Fields.List {
+	for _, field := range astSt.Fields.List {
 		stField := &StructField{
 			Name: field.Names[0].Name,
 			Type: getType(field.Type),
@@ -204,7 +214,7 @@ func ConvertStruct(name, repoPath, repoImport, comment string, astFile *ast.File
 		if field.Tag != nil {
 			stField.Tag = field.Tag.Value
 		}
-		sts, enums, err := getRelevantStructsEnums(field.Type, astFile, repoPath, repoImport, comment)
+		sts, enums, err := getRelevantStructsEnums(field.Type, astFile, repoPath, repoImport, curPath)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +229,7 @@ func ConvertStruct(name, repoPath, repoImport, comment string, astFile *ast.File
 	return st, nil
 }
 
-func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImport, comment string) (sts []*Struct, enums []*Enum, err error) {
+func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImport, curPath string) (sts []*Struct, enums []*Enum, err error) {
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		if _, ok := TypeMapping[expr.Name]; ok {
@@ -227,7 +237,7 @@ func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImp
 			return nil, nil, nil
 		} else {
 			// enum
-			enum, err := getEnum(expr.Name, astFile)
+			enum, err := getDirEnum(curPath, expr.Name)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -238,13 +248,13 @@ func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImp
 			}
 		}
 	case *ast.ArrayType:
-		return getRelevantStructsEnums(expr.Elt, astFile, repoPath, repoImport, comment)
+		return getRelevantStructsEnums(expr.Elt, astFile, repoPath, repoImport, curPath)
 	case *ast.MapType:
-		keySt, keyEnum, err := getRelevantStructsEnums(expr.Key, astFile, repoPath, repoImport, comment)
+		keySt, keyEnum, err := getRelevantStructsEnums(expr.Key, astFile, repoPath, repoImport, curPath)
 		if err != nil {
 			return nil, nil, err
 		}
-		vSt, vEnum, err := getRelevantStructsEnums(expr.Value, astFile, repoPath, repoImport, comment)
+		vSt, vEnum, err := getRelevantStructsEnums(expr.Value, astFile, repoPath, repoImport, curPath)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -270,14 +280,18 @@ func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImp
 		if err != nil {
 			return nil, nil, err
 		}
-		enum, err := getRemoteEnum(searchPath, expr.Sel.Name)
+		enum, err := getDirEnum(searchPath, expr.Sel.Name)
 		if err != nil {
 			return nil, nil, err
 		}
 		return nil, []*Enum{enum}, nil
 	case *ast.StarExpr:
 		if exprX, ok := expr.X.(*ast.Ident); ok {
-			stt, err := ConvertStruct(exprX.Name, repoPath, repoImport, comment, astFile)
+			f, astSt, err := utils.GetAstFileByStructName(curPath, exprX.Name)
+			if err != nil {
+				return nil, nil, err
+			}
+			stt, err := ConvertStruct(exprX.Name, repoPath, repoImport, curPath, astSt, f)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -291,11 +305,11 @@ func getRelevantStructsEnums(expr ast.Expr, astFile *ast.File, repoPath, repoImp
 			if err != nil {
 				return nil, nil, err
 			}
-			f, err := GetRemoteStruct(searchPath, exprSe.Sel.Name)
+			f, astSt, err := utils.GetAstFileByStructName(searchPath, exprSe.Sel.Name)
 			if err != nil {
 				return nil, nil, err
 			}
-			stt, err := ConvertStruct(exprSe.Sel.Name, repoPath, repoImport, comment, f)
+			stt, err := ConvertStruct(exprSe.Sel.Name, repoPath, repoImport, searchPath, astSt, f)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -329,7 +343,7 @@ func getType(expr ast.Expr) string {
 	return ""
 }
 
-func getRemoteEnum(searchPath, name string) (*Enum, error) {
+func getDirEnum(searchPath, name string) (*Enum, error) {
 	files, err := os.ReadDir(searchPath)
 	if err != nil {
 		return nil, err
@@ -361,37 +375,6 @@ func getRemoteEnum(searchPath, name string) (*Enum, error) {
 	return enum, nil
 }
 
-func GetRemoteStruct(searchPath, name string) (*ast.File, error) {
-	files, err := os.ReadDir(searchPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var file *ast.File
-	var st *ast.StructType
-	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ".go") {
-			p := filepath.Join(searchPath, f.Name())
-			fSet := token.NewFileSet()
-			astFile, err := parser.ParseFile(fSet, p, nil, parser.ParseComments)
-			if err != nil {
-				return nil, err
-			}
-			st = getStruct(name, astFile)
-			if st != nil {
-				file = astFile
-				break
-			}
-		}
-	}
-
-	if st == nil {
-		return nil, fmt.Errorf("can not find struct %v", name)
-	}
-
-	return file, nil
-}
-
 func getEnum(name string, astFile *ast.File) (*Enum, error) {
 	enum := &Enum{
 		Name:       name,
@@ -400,12 +383,14 @@ func getEnum(name string, astFile *ast.File) (*Enum, error) {
 	var ty *ast.TypeSpec
 	t := ""
 	ast.Inspect(astFile, func(n ast.Node) bool {
-		if spec, ok := n.(*ast.TypeSpec); ok && spec.Name.Name == name {
-			if _, ok = spec.Type.(*ast.Ident); ok {
-				ty = spec
-				t = spec.Name.Name
+		if spec, ok := n.(*ast.TypeSpec); ok {
+			if spec.Name.Name == name {
+				if _, ok = spec.Type.(*ast.Ident); ok {
+					ty = spec
+					t = spec.Name.Name
+				}
+				return false
 			}
-			return false
 		}
 		return true
 	})
@@ -436,21 +421,6 @@ func getEnum(name string, astFile *ast.File) (*Enum, error) {
 	}
 
 	return enum, nil
-}
-
-func getStruct(name string, astFile *ast.File) *ast.StructType {
-	var ty *ast.StructType
-	ast.Inspect(astFile, func(n ast.Node) bool {
-		if spec, ok := n.(*ast.TypeSpec); ok && spec.Name.Name == name {
-			if t, ok := spec.Type.(*ast.StructType); ok {
-				ty = t
-				return false
-			}
-			return true
-		}
-		return true
-	})
-	return ty
 }
 
 func getSearchPath(pkgName, repoImport, repoPath string, astFile *ast.File) (string, error) {
