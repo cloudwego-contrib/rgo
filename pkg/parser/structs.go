@@ -19,13 +19,14 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/cmd"
-	"github.com/cloudwego-contrib/rgo/pkg/common/utils"
-	"github.com/cloudwego-contrib/rgo/pkg/transformer"
 	"go/ast"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/cmd"
+	"github.com/cloudwego-contrib/rgo/pkg/common/utils"
+	"github.com/cloudwego-contrib/rgo/pkg/transformer"
 )
 
 // getParsedStruct is used to parse param.pType to *transformer.Struct.

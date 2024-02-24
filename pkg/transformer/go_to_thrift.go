@@ -135,7 +135,7 @@ func (tf *ThriftFile) Generate(genPath string) (string, error) {
 	return data, nil
 }
 
-func (st *Struct) Generate(structMap map[string]struct{}, enumMap map[string]struct{}) string {
+func (st *Struct) Generate(structMap, enumMap map[string]struct{}) string {
 	data := "struct " + st.Name + " {\n"
 	stDatas := make([]string, 0, 10)
 	enumDatas := make([]string, 0, 3)

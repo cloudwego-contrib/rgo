@@ -21,10 +21,11 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"golang.org/x/tools/go/ast/astutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 func AppendImports(fSet *token.FileSet, astFile *ast.File, imp []string) {

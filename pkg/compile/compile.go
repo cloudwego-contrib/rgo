@@ -19,10 +19,11 @@ package compile
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/cloudwego-contrib/rgo/cmd"
 	"github.com/cloudwego-contrib/rgo/pkg/common/utils"
 	"github.com/cloudwego-contrib/rgo/pkg/parser"
-	"strings"
 )
 
 func Compile(arg *cmd.Argument) error {

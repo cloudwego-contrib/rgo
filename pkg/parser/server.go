@@ -217,7 +217,8 @@ func checkRgoRun(funcDecl *ast.FuncDecl, astFile *ast.File) (*ast.CallExpr, erro
 }
 
 func parseRgoRunArgs(callExpr *ast.CallExpr, tf *transformer.ThriftFile, astFile *ast.File,
-	cmdArg *cmd.Argument, handlerDepenMap map[string]*handlerDepenInfo) error {
+	cmdArg *cmd.Argument, handlerDepenMap map[string]*handlerDepenInfo,
+) error {
 	if len(callExpr.Args) < 2 {
 		return errors.New("rgo.Run() function needs al least two arguments: serviceName and one server function")
 	}
@@ -291,7 +292,8 @@ func parseRgoRunArgs(callExpr *ast.CallExpr, tf *transformer.ThriftFile, astFile
 }
 
 func parseServerFunc(funcDecl *ast.FuncDecl, tf *transformer.ThriftFile, arg *cmd.Argument,
-	astFile *ast.File, fileDir string) (*astFuncInfo, string, error) {
+	astFile *ast.File, fileDir string,
+) (*astFuncInfo, string, error) {
 	// check grammar errors and parse function name, params info and returns info to AstFuncInfo struct
 	funcInfo, err := checkAndParseFunc(funcDecl, astFile.Name.Name)
 	if err != nil {
@@ -326,7 +328,8 @@ func parseServerFunc(funcDecl *ast.FuncDecl, tf *transformer.ThriftFile, arg *cm
 }
 
 func replaceMainBody(funcDecl *ast.FuncDecl, cmdArg *cmd.Argument, tf *transformer.ThriftFile,
-	fSet *token.FileSet, astFile *ast.File) error {
+	fSet *token.FileSet, astFile *ast.File,
+) error {
 	srvGenDir := filepath.Join(cmdArg.TempDir, "server", tf.Name)
 	idlSrvName := tf.Service.Name
 	idlSrvNameLower := strings.ToLower(strings.Replace(idlSrvName, "_", "", -1))

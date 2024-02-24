@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/transformer"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -29,6 +28,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/transformer"
 
 	"github.com/cloudwego-contrib/rgo/cmd"
 
@@ -324,7 +325,8 @@ func genInitClient(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift,
 }
 
 func replaceClientFuncBody(depend *cliDependImportPath, astTree *thriftgo_parser.Thrift, funcInfo *astFuncInfo,
-	fSet *token.FileSet, astFile *ast.File, funcDec *ast.FuncDecl) error {
+	fSet *token.FileSet, astFile *ast.File, funcDec *ast.FuncDecl,
+) error {
 	respType := ""
 	if funcInfo.returns[0].isSamePkg {
 		respType = "*" + strings.Split(funcInfo.returns[0].pType, ".")[1]
