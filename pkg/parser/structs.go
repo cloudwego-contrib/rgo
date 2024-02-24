@@ -28,8 +28,11 @@ import (
 	"strings"
 )
 
+// getParsedStruct is used to parse param.pType to *transformer.Struct.
+// There are three situations: within the local package, outside the local package, and in the remote repo.
 func getParsedStruct(param *param, arg *cmd.Argument, astFile *ast.File, fileDir string) (*transformer.Struct, string, error) {
 	if param.isSamePkg {
+		// within the local package
 		f, astSt, err := utils.GetAstFileByStructName(fileDir, strings.Split(param.pType, ".")[1])
 		if err != nil {
 			return nil, "", err
@@ -55,6 +58,7 @@ func getParsedStruct(param *param, arg *cmd.Argument, astFile *ast.File, fileDir
 			return nil, "", err
 		}
 		if !isExist {
+			// in the remote repo
 			stInfo, err := getRemoteStructInfo(strings.Split(param.pType, ".")[0][1:], arg.GoModPath, astFile)
 			if err != nil {
 				return nil, "", err
@@ -68,18 +72,19 @@ func getParsedStruct(param *param, arg *cmd.Argument, astFile *ast.File, fileDir
 			if err != nil {
 				return nil, "", err
 			}
-			st, err := transformer.ConvertStruct(strings.Split(param.pType, ".")[1], stInfo.repoPath, stInfo.repoImportPath, fileDir, astSt, remoteF)
+			st, err := transformer.ConvertStruct(strings.Split(param.pType, ".")[1], stInfo.repoPath, stInfo.repoImportPath, stPath, astSt, remoteF)
 			if err != nil {
 				return nil, "", err
 			}
 			return st, stInfo.stImportPath, nil
 		} else {
+			// outside the local package
 			f, astSt, err := utils.GetAstFileByStructName(filepath.Join(arg.GoModPath, p), strings.Split(param.pType, ".")[1])
 			if err != nil {
 				return nil, "", err
 			}
 
-			st, err := transformer.ConvertStruct(strings.Split(param.pType, ".")[1], arg.GoModPath, arg.GoMod, fileDir, astSt, f)
+			st, err := transformer.ConvertStruct(strings.Split(param.pType, ".")[1], arg.GoModPath, arg.GoMod, filepath.Join(arg.GoModPath, p), astSt, f)
 			if err != nil {
 				return nil, "", err
 			}

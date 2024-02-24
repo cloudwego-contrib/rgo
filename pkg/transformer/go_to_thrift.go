@@ -179,6 +179,7 @@ func (st *Struct) Generate(structMap map[string]struct{}, enumMap map[string]str
 	return data
 }
 
+// GenerateSingle is used to check if the structural versions of the client and server are consistent.
 func (st *Struct) GenerateSingle() string {
 	data := "struct " + st.Name + " {\n"
 	for index, field := range st.StructFields {
@@ -201,6 +202,12 @@ func (enum *Enum) Generate() string {
 	return data
 }
 
+// ConvertStruct is used to convert *ast.StructType to *transformer.Struct.
+//
+//	name: struct name.
+//	repoPath: the goMod path where the structure is located.
+//	repoImport: the goMod where the structure is located.
+//	curPath: the directory where the structure is located.
 func ConvertStruct(name, repoPath, repoImport, curPath string, astSt *ast.StructType, astFile *ast.File) (*Struct, error) {
 	st := &Struct{
 		Name:         name,
@@ -423,6 +430,7 @@ func getEnum(name string, astFile *ast.File) (*Enum, error) {
 	return enum, nil
 }
 
+// getSearchPath search specified package name's repo path.
 func getSearchPath(pkgName, repoImport, repoPath string, astFile *ast.File) (string, error) {
 	importValue, err := utils.GetImportPath(pkgName, astFile)
 	if err != nil {

@@ -34,7 +34,7 @@ type astFuncInfo struct {
 type param struct {
 	isSamePkg bool
 	name      string
-	pType     string
+	pType     string // if the type of the param is structure, the form of pType is: *{packageName}.{StructType}
 }
 
 func checkAndParseComment(s string) (result []string, err error) {
