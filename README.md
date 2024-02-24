@@ -46,7 +46,7 @@ export RGO_MYSQL_DSN="gorm:gorm@tcp(localhost:3306)/gorm?charset=utf8&parseTime=
 
 ```shell
 cd examples/server
-go run -toolexec rgo main.go
+go run -a -toolexec rgo main.go
 ```
 
 效果:
@@ -60,7 +60,7 @@ create service success, username: xiaoming, password: 123456
 
 ```shell
 cd examples/client
-go run -toolexec rgo main.go
+go run -a -toolexec rgo main.go
 ```
 
 效果:
