@@ -19,11 +19,9 @@ package compile
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/cloudwego-contrib/rgo/cmd"
-
 	"github.com/cloudwego-contrib/rgo/pkg/common/utils"
 	"github.com/cloudwego-contrib/rgo/pkg/parser"
 )
@@ -49,7 +47,7 @@ func Compile(arg *cmd.Argument) error {
 			arg.ServerCfg = argument
 			arg.ClientCfg = argument
 		}
-		if strings.HasPrefix(argument, arg.Cwd+string(filepath.Separator)) && strings.HasSuffix(argument, ".go") {
+		if strings.HasSuffix(argument, ".go") {
 			files = arg.ChainArgs[i:]
 			break
 		}

@@ -122,7 +122,9 @@ func MergeImportCfg(genTxtPath, originalCfg, cfg string, isCompilePhase bool) er
 			}
 		}
 	}
-	w.Flush()
+	if err = w.Flush(); err != nil {
+		return fmt.Errorf("flush error, err: %v", err)
+	}
 
 	return nil
 }

@@ -17,6 +17,7 @@
 package consts
 
 const (
-	RgoServer = "rgo:server"
-	RgoClient = "rgo:client"
+	RgoClient     = "rgo:"
+	Main          = "main"
+	RgoImportPath = "github.com/cloudwego-contrib/rgo/cmd/rgo"
 )

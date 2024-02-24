@@ -62,7 +62,7 @@ func CreateSM(ctx context.Context, sm *ServerManage) error {
 
 func GetSMByServiceNameVersion(ctx context.Context, name, version string, sm *ServerManage) error {
 	if err := db.WithContext(ctx).Where("service_name = ? and server_version = ?", name, version).
-		Last(sm).Error; err != nil {
+		First(sm).Error; err != nil {
 		return err
 	}
 	return nil
@@ -75,8 +75,8 @@ func GetLastSMByServiceName(ctx context.Context, name string, sm *ServerManage) 
 	return nil
 }
 
-func MGetSMByServiceName(ctx context.Context, name string, sm []*ServerManage) error {
-	if err := db.WithContext(ctx).Where("service_name = ?", name).Find(&sm).Error; err != nil {
+func MGetSMByServiceName(ctx context.Context, name string, sm *[]*ServerManage) error {
+	if err := db.WithContext(ctx).Where("service_name = ?", name).Find(sm).Error; err != nil {
 		return err
 	}
 	return nil
