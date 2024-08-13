@@ -3,11 +3,13 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/utils"
 	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
 	"go/format"
 	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -43,6 +45,18 @@ func generateClientCode(idlPath, repoPath string) error {
 		return err
 	}
 
+	exist, err := utils.FileExistsInPath(repoPath, "go.mod")
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		err = initGoMod("rgo", repoPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	outputDir := filepath.Join(repoPath, "src/rgo-gen-go", namespace)
 
 	// Generate the Go code
@@ -54,6 +68,26 @@ func generateClientCode(idlPath, repoPath string) error {
 
 	if err := format.Node(outputFile, fset, f); err != nil {
 		panic(err)
+	}
+
+	return nil
+}
+
+func initGoMod(moduleName, path string) error {
+	// Construct the command to run 'go mod init'
+	cmd := exec.Command("go", "mod", "init", moduleName)
+
+	// Set the working directory for the command
+	cmd.Dir = path
+
+	// Set the command's standard output and error to the current process
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run the command
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to initialize go.mod in path '%s': %w", path, err)
 	}
 
 	return nil
@@ -75,12 +109,6 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 
 	f := &ast.File{
 		Name: ast.NewIdent(namespace),
-	}
-
-	f.Imports = []*ast.ImportSpec{
-		{Path: &ast.BasicLit{Kind: token.STRING, Value: `"context"`}},
-		{Path: &ast.BasicLit{Kind: token.STRING, Value: `"github.com/cloudwego/kitex/client"`}},
-		{Path: &ast.BasicLit{Kind: token.STRING, Value: `"github.com/cloudwego/kitex/client/callopt"`}},
 	}
 
 	f.Decls = append([]ast.Decl{
