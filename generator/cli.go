@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func GenerateRGOCode(idlPath, repoPath string) error {
@@ -99,7 +100,7 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 
 	for _, v := range thrift.Namespaces {
 		if v.Language == "go" {
-			namespace = v.Name
+			namespace = strings.ToLower(v.GetName())
 		}
 	}
 

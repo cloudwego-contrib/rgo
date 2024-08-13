@@ -60,11 +60,19 @@ func Init() {
 
 	// 生成代码
 	for _, idlConfig := range rgoInfo.IDLConfig {
-		path := filepath.Join(idlConfig.Repository, idlConfig.IDLPath)
 
-		err := generator.GenerateRGOCode(path, rgoRepoPath)
-		if err != nil {
-			log.Fatalf("Failed to generate code for %s: %v", idlConfig.IDLPath, err)
+		if utils.IsGitURL(idlConfig.Repository) {
+			err := generator.GenerateRemoteRGOCode(&idlConfig, rgoRepoPath)
+			if err != nil {
+				log.Fatalf("Failed to clone repository %s: %v", idlConfig.Repository, err)
+			}
+		} else {
+			path := filepath.Join(idlConfig.Repository, idlConfig.IDLPath)
+
+			err := generator.GenerateRGOCode(path, rgoRepoPath)
+			if err != nil {
+				log.Fatalf("Failed to generate code for %s: %v", idlConfig.IDLPath, err)
+			}
 		}
 	}
 }
