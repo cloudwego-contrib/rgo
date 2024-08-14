@@ -41,16 +41,16 @@ func Init() {
 	for _, path := range IDLConfigPath {
 		content, err := os.ReadFile(path)
 		if err != nil {
-			log.Fatalf("Failed to read config file %s: %v", path, err)
+			log.Fatalf("Failed to read c file %s: %v", path, err)
 		}
 
-		var config *config.Config
-		err = yaml.Unmarshal(content, &config)
+		var c *config.Config
+		err = yaml.Unmarshal(content, &c)
 		if err != nil {
 			log.Fatalf("Failed to parse YAML file %s: %v", path, err)
 		}
 
-		rgoInfo.IDLConfig = append(rgoInfo.IDLConfig, config.RgoInfo.IDLConfig...)
+		rgoInfo.IDLConfig = append(rgoInfo.IDLConfig, c.RgoInfo.IDLConfig...)
 	}
 
 	rgoRepoPath := os.Getenv(consts.RGORepositoryPath)
@@ -58,21 +58,11 @@ func Init() {
 		rgoRepoPath = filepath.Join(utils.GetDefaultUserPath(), "RGO")
 	}
 
-	// 生成代码
-	for _, idlConfig := range rgoInfo.IDLConfig {
+	g := generator.NewRGOGenerator(rgoInfo, rgoRepoPath)
 
-		if utils.IsGitURL(idlConfig.Repository) {
-			err := generator.GenerateRemoteRGOCode(&idlConfig, rgoRepoPath)
-			if err != nil {
-				log.Fatalf("Failed to clone repository %s: %v", idlConfig.Repository, err)
-			}
-		} else {
-			path := filepath.Join(idlConfig.Repository, idlConfig.IDLPath)
-
-			err := generator.GenerateRGOCode(path, rgoRepoPath)
-			if err != nil {
-				log.Fatalf("Failed to generate code for %s: %v", idlConfig.IDLPath, err)
-			}
-		}
+	err := g.Generate()
+	if err != nil {
+		log.Println(err)
 	}
+
 }

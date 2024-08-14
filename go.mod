@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/TobiasYin/go-lsp v0.0.0-20231106040121-c84e66f01aa4
 	github.com/cloudwego/thriftgo v0.3.6
+	github.com/google/uuid v1.6.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

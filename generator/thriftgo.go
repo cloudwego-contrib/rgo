@@ -3,18 +3,20 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/consts"
 	"github.com/cloudwego/thriftgo/parser"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
-func generateThriftCode(idlPath, repoPath string) error {
-	outputDir := filepath.Join(repoPath, "src/rgo-gen-go/{namespace}")
+func generateThriftCode(idlRepoPath, idlPath, rgoRepoPath string) error {
+	outputDir := filepath.Join(rgoRepoPath, "src/rgo-gen-go", idlRepoPath, "{namespace}")
 	command := "thriftgo"
 	args := []string{
-		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes",
+		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes" + fmt.Sprintf(",package_prefix=%s", filepath.Join(consts.RGOModuleName, consts.RGOGenCodePath, idlRepoPath)),
 		"-o", outputDir,
+		"--recurse",
 		idlPath,
 	}
 
@@ -32,15 +34,34 @@ func generateThriftCode(idlPath, repoPath string) error {
 }
 
 func parseIDLFile(idlFile string) (*parser.Thrift, error) {
-	content, err := os.ReadFile(idlFile)
-	if err != nil {
-		return nil, err
-	}
-
-	thriftFile, err := parser.ParseString(idlFile, string(content))
+	thriftFile, err := parser.ParseFile(idlFile, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	return thriftFile, nil
+}
+
+// todo: 解析远程仓库 thrift include 耗时较长
+func getThriftIncludeFiles(idlFile string) ([]string, error) {
+	var includeFiles []string
+
+	var traverseThriftFile func(thriftFile *parser.Thrift)
+
+	traverseThriftFile = func(thriftFile *parser.Thrift) {
+		includeFiles = append(includeFiles, thriftFile.Filename)
+
+		for _, include := range thriftFile.Includes {
+			traverseThriftFile(include.Reference)
+		}
+	}
+
+	thriftFile, err := parseIDLFile(idlFile)
+	if err != nil {
+		return nil, err
+	}
+
+	traverseThriftFile(thriftFile)
+
+	return includeFiles, nil
 }

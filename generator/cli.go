@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/consts"
 	"github.com/cloudwego-contrib/rgo/utils"
 	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
@@ -14,17 +15,18 @@ import (
 	"strings"
 )
 
-func GenerateRGOCode(idlPath, repoPath string) error {
+func GenerateRGOCode(idlRepoPath, idlPath, rgoRepoPath string) error {
 	fileType := filepath.Ext(idlPath)
+	idlRepoPath = strings.ReplaceAll(idlRepoPath, "@", "/")
 
 	switch fileType {
 	case ".thrift":
-		err := generateThriftCode(idlPath, repoPath)
+		err := generateThriftCode(idlRepoPath, idlPath, rgoRepoPath)
 		if err != nil {
 			return err
 		}
 
-		return generateClientCode(idlPath, repoPath)
+		return generateClientCode(idlRepoPath, idlPath, rgoRepoPath)
 	case ".proto":
 		return nil
 	default:
@@ -32,13 +34,12 @@ func GenerateRGOCode(idlPath, repoPath string) error {
 	}
 }
 
-func generateClientCode(idlPath, repoPath string) error {
+func generateClientCode(idlRepoPath, idlPath, rgoRepoPath string) error {
 	thriftFile, err := parseIDLFile(idlPath)
 	if err != nil {
 		return err
 	}
 
-	// Create a new file set
 	fset := token.NewFileSet()
 
 	namespace, f, err := buildThriftAstFile(thriftFile)
@@ -46,46 +47,41 @@ func generateClientCode(idlPath, repoPath string) error {
 		return err
 	}
 
-	exist, err := utils.FileExistsInPath(repoPath, "go.mod")
+	exist, err := utils.FileExistsInPath(rgoRepoPath, "go.mod")
 	if err != nil {
 		return err
 	}
 
 	if !exist {
-		err = initGoMod("rgo", repoPath)
+		err = initGoMod(consts.RGOModuleName, rgoRepoPath)
 		if err != nil {
 			return err
 		}
 	}
 
-	outputDir := filepath.Join(repoPath, "src/rgo-gen-go", namespace)
+	outputDir := filepath.Join(rgoRepoPath, consts.RGOGenCodePath, idlRepoPath, namespace)
 
-	// Generate the Go code
-	outputFile, err := os.Create(filepath.Join(outputDir, "cli.go"))
+	outputFile, err := os.Create(filepath.Join(outputDir, fmt.Sprintf("%s_cli.go", utils.GetFileNameWithoutExt(thriftFile.Filename))))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer outputFile.Close()
 
-	if err := format.Node(outputFile, fset, f); err != nil {
-		panic(err)
+	if err = format.Node(outputFile, fset, f); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func initGoMod(moduleName, path string) error {
-	// Construct the command to run 'go mod init'
 	cmd := exec.Command("go", "mod", "init", moduleName)
 
-	// Set the working directory for the command
 	cmd.Dir = path
 
-	// Set the command's standard output and error to the current process
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	// Run the command
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to initialize go.mod in path '%s': %w", path, err)
@@ -95,7 +91,6 @@ func initGoMod(moduleName, path string) error {
 }
 
 func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
-	// Create the AST for the Go file
 	var namespace string
 
 	for _, v := range thrift.Namespaces {

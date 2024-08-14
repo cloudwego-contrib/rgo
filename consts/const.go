@@ -4,3 +4,13 @@ const (
 	IDLConfigPath     = "IDL_CONFIG_PATH"
 	RGORepositoryPath = "RGO_REPOSITORY_PATH"
 )
+
+const (
+	IDLRemotePath = "remote"
+	IDLCacheFile  = ".cache/idl_cache.json"
+)
+
+const (
+	RGOModuleName  = "rgo"
+	RGOGenCodePath = "src/rgo-gen-go"
+)

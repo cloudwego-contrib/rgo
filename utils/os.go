@@ -6,6 +6,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 func GetDefaultUserPath() string {
@@ -60,4 +61,10 @@ func FileExistsInPath(dir string, filename string) (bool, error) {
 	}
 
 	return !info.IsDir(), nil
+}
+
+func GetFileNameWithoutExt(filePath string) string {
+	base := filepath.Base(filePath)
+	nameWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
+	return nameWithoutExt
 }
