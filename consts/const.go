@@ -6,8 +6,9 @@ const (
 )
 
 const (
-	IDLRemotePath = "remote"
-	IDLCacheFile  = ".cache/idl_cache.json"
+	RGOConfigDefaultPath = "./rgo_config.yaml"
+	IDLRemotePath        = "remote"
+	IDLCacheFile         = ".cache/idl_cache.json"
 )
 
 const (

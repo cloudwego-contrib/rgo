@@ -1,56 +1,24 @@
 package main
 
 import (
-	"fmt"
 	"github.com/cloudwego-contrib/rgo/config"
 	"github.com/cloudwego-contrib/rgo/consts"
 	"github.com/cloudwego-contrib/rgo/generator"
 	"github.com/cloudwego-contrib/rgo/utils"
-	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-var IDLConfigPath flagSlice
-
-// 自定义类型 flagSlice 用于支持多个路径输入
-type flagSlice []string
-
-func (f *flagSlice) String() string {
-	return fmt.Sprintf("%v", *f)
-}
-
-func (f *flagSlice) Set(value string) error {
-	*f = append(*f, value)
-	return nil
-}
-
 func Init() {
-	IDLConfigPathStr := os.Getenv(consts.IDLConfigPath)
-	if IDLConfigPathStr == "" {
-		return
+	IDLConfigPath := os.Getenv(consts.IDLConfigPath)
+	if IDLConfigPath == "" {
+		IDLConfigPath = consts.RGOConfigDefaultPath
 	}
 
-	IDLConfigPath = strings.Split(IDLConfigPathStr, ",")
-
-	rgoInfo := &config.RgoInfo{}
-	rgoInfo.IDLConfig = make([]config.IDLConfig, 0)
-
-	for _, path := range IDLConfigPath {
-		content, err := os.ReadFile(path)
-		if err != nil {
-			log.Fatalf("Failed to read c file %s: %v", path, err)
-		}
-
-		var c *config.Config
-		err = yaml.Unmarshal(content, &c)
-		if err != nil {
-			log.Fatalf("Failed to parse YAML file %s: %v", path, err)
-		}
-
-		rgoInfo.IDLConfig = append(rgoInfo.IDLConfig, c.RgoInfo.IDLConfig...)
+	c, err := config.ReadConfig(IDLConfigPath)
+	if err != nil {
+		panic("read rgo_config failed, err:" + err.Error())
 	}
 
 	rgoRepoPath := os.Getenv(consts.RGORepositoryPath)
@@ -58,9 +26,9 @@ func Init() {
 		rgoRepoPath = filepath.Join(utils.GetDefaultUserPath(), "RGO")
 	}
 
-	g := generator.NewRGOGenerator(rgoInfo, rgoRepoPath)
+	g := generator.NewRGOGenerator(c, rgoRepoPath)
 
-	err := g.Generate()
+	err = g.Run()
 	if err != nil {
 		log.Println(err)
 	}

@@ -41,27 +41,3 @@ func parseIDLFile(idlFile string) (*parser.Thrift, error) {
 
 	return thriftFile, nil
 }
-
-// todo: 解析远程仓库 thrift include 耗时较长
-func getThriftIncludeFiles(idlFile string) ([]string, error) {
-	var includeFiles []string
-
-	var traverseThriftFile func(thriftFile *parser.Thrift)
-
-	traverseThriftFile = func(thriftFile *parser.Thrift) {
-		includeFiles = append(includeFiles, thriftFile.Filename)
-
-		for _, include := range thriftFile.Includes {
-			traverseThriftFile(include.Reference)
-		}
-	}
-
-	thriftFile, err := parseIDLFile(idlFile)
-	if err != nil {
-		return nil, err
-	}
-
-	traverseThriftFile(thriftFile)
-
-	return includeFiles, nil
-}
