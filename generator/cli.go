@@ -3,7 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/consts"
+	"github.com/cloudwego-contrib/rgo/global/consts"
 	"github.com/cloudwego-contrib/rgo/utils"
 	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
@@ -15,18 +15,39 @@ import (
 	"strings"
 )
 
-func GenerateRGOCode(idlRepoPath, idlPath, rgoRepoPath string) error {
+func (rg *RGOGenerator) generateRGOCode(curWorkPath, serviceName, idlPath, rgoSrcPath string) error {
+	exist, err := utils.FileExistsInPath(rgoSrcPath, "go.mod")
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		err = os.MkdirAll(rgoSrcPath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create directory: %v", err)
+		}
+
+		err = initGoMod(filepath.Join(consts.RGOModuleName, serviceName), rgoSrcPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	fileType := filepath.Ext(idlPath)
-	idlRepoPath = strings.ReplaceAll(idlRepoPath, "@", "/")
 
 	switch fileType {
 	case ".thrift":
-		err := generateThriftCode(idlRepoPath, idlPath, rgoRepoPath)
+		err := generateThriftCodeFromSdk(idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
 
-		return generateClientCode(idlRepoPath, idlPath, rgoRepoPath)
+		err = generateClientCode(serviceName, idlPath, rgoSrcPath)
+		if err != nil {
+			return err
+		}
+
+		return rg.generateRGOPackages(curWorkPath, serviceName, rgoSrcPath)
 	case ".proto":
 		return nil
 	default:
@@ -34,7 +55,7 @@ func GenerateRGOCode(idlRepoPath, idlPath, rgoRepoPath string) error {
 	}
 }
 
-func generateClientCode(idlRepoPath, idlPath, rgoRepoPath string) error {
+func generateClientCode(serviceName, idlPath, rgoSrcPath string) error {
 	thriftFile, err := parseIDLFile(idlPath)
 	if err != nil {
 		return err
@@ -42,24 +63,12 @@ func generateClientCode(idlRepoPath, idlPath, rgoRepoPath string) error {
 
 	fset := token.NewFileSet()
 
-	namespace, f, err := buildThriftAstFile(thriftFile)
+	f, err := buildThriftAstFile(serviceName, rgoSrcPath, thriftFile)
 	if err != nil {
 		return err
 	}
 
-	exist, err := utils.FileExistsInPath(rgoRepoPath, "go.mod")
-	if err != nil {
-		return err
-	}
-
-	if !exist {
-		err = initGoMod(consts.RGOModuleName, rgoRepoPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	outputDir := filepath.Join(rgoRepoPath, consts.RGOGenCodePath, idlRepoPath, namespace)
+	outputDir := rgoSrcPath
 
 	outputFile, err := os.Create(filepath.Join(outputDir, fmt.Sprintf("%s_cli.go", utils.GetFileNameWithoutExt(thriftFile.Filename))))
 	if err != nil {
@@ -90,7 +99,7 @@ func initGoMod(moduleName, path string) error {
 	return nil
 }
 
-func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
+func buildThriftAstFile(serviceName, path string, thrift *parser.Thrift) (*ast.File, error) {
 	var namespace string
 
 	for _, v := range thrift.Namespaces {
@@ -100,11 +109,11 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 	}
 
 	if namespace == "" {
-		return "", nil, errors.New("no go namespace found")
+		return nil, errors.New("no go namespace found")
 	}
 
 	f := &ast.File{
-		Name: ast.NewIdent(namespace),
+		Name: ast.NewIdent(serviceName),
 	}
 
 	f.Decls = append([]ast.Decl{
@@ -119,6 +128,9 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 				},
 				&ast.ImportSpec{
 					Path: &ast.BasicLit{Kind: token.STRING, Value: `"github.com/cloudwego/kitex/client/callopt"`},
+				},
+				&ast.ImportSpec{
+					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, serviceName, "kitex_gen", namespace))},
 				},
 			},
 		},
@@ -137,7 +149,10 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 								List: []*ast.Field{
 									{
 										Names: []*ast.Ident{ast.NewIdent(s.Name)},
-										Type:  ast.NewIdent(s.Name),
+										Type: &ast.SelectorExpr{
+											X:   ast.NewIdent(namespace),
+											Sel: ast.NewIdent(s.Name),
+										},
 									},
 								},
 							},
@@ -155,7 +170,7 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 							},
 							{
 								Names: []*ast.Ident{ast.NewIdent("opts")},
-								Type: &ast.ArrayType{
+								Type: &ast.Ellipsis{
 									Elt: &ast.SelectorExpr{
 										X:   ast.NewIdent("client"),
 										Sel: ast.NewIdent("Option"),
@@ -208,14 +223,17 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 				t = append(t, &ast.Field{
 					Names: []*ast.Ident{ast.NewIdent(arg.Name)},
 					Type: &ast.StarExpr{
-						X: ast.NewIdent(arg.Type.Name),
+						X: &ast.SelectorExpr{
+							X:   ast.NewIdent(namespace),
+							Sel: ast.NewIdent(arg.Type.Name),
+						},
 					},
 				})
 			}
 
 			t = append(t, &ast.Field{
 				Names: []*ast.Ident{ast.NewIdent("opts")},
-				Type: &ast.ArrayType{
+				Type: &ast.Ellipsis{
 					Elt: &ast.SelectorExpr{
 						X:   ast.NewIdent("callopt"),
 						Sel: ast.NewIdent("CallOptions"),
@@ -234,7 +252,7 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 						},
 					},
 				},
-				Name: ast.NewIdent(function.Name),
+				Name: ast.NewIdent(strings.Title(function.Name)),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: t,
@@ -243,7 +261,10 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 						List: []*ast.Field{
 							{
 								Type: &ast.StarExpr{
-									X: ast.NewIdent(function.FunctionType.Name),
+									X: &ast.SelectorExpr{
+										X:   ast.NewIdent(namespace),
+										Sel: ast.NewIdent(function.FunctionType.Name),
+									},
 								},
 							},
 							{
@@ -264,7 +285,7 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 				},
 			},
 				&ast.FuncDecl{
-					Name: ast.NewIdent(function.Name),
+					Name: ast.NewIdent(strings.Title(function.Name)),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
 							List: t,
@@ -273,7 +294,10 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 							List: []*ast.Field{
 								{
 									Type: &ast.StarExpr{
-										X: ast.NewIdent(function.FunctionType.Name),
+										X: &ast.SelectorExpr{
+											X:   ast.NewIdent(namespace),
+											Sel: ast.NewIdent(function.FunctionType.Name),
+										},
 									},
 								},
 								{
@@ -297,5 +321,13 @@ func buildThriftAstFile(thrift *parser.Thrift) (string, *ast.File, error) {
 
 	}
 
-	return namespace, f, nil
+	return f, nil
+}
+
+func extractPathAfterCache(fullPath string) string {
+	index := strings.Index(fullPath, "cache/")
+	if index == -1 {
+		return ""
+	}
+	return fullPath[index:]
 }

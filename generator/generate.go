@@ -1,78 +1,80 @@
 package generator
 
 import (
-	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/config"
-	"github.com/cloudwego-contrib/rgo/consts"
+	"github.com/cloudwego-contrib/rgo/global"
+	"github.com/cloudwego-contrib/rgo/global/config"
+	"github.com/cloudwego-contrib/rgo/global/consts"
 	"github.com/cloudwego-contrib/rgo/utils"
 	"github.com/spf13/viper"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 type RGOGenerator struct {
-	ic          *IDLCache
-	rgoRepoPath string
+	rgoBasePath string
+	curWorkPath string
 	rgoConfig   *config.RGOConfig
 	mu          sync.Mutex
 	idlMutex    map[string]*sync.Mutex
 	wg          sync.WaitGroup
 }
 
-func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoRepoPath string) *RGOGenerator {
+func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath, curWorkPath string) *RGOGenerator {
 	return &RGOGenerator{
-		ic:          NewIDLCache(),
-		rgoRepoPath: rgoRepoPath,
+		rgoBasePath: rgoBasePath,
+		curWorkPath: curWorkPath,
 		rgoConfig:   rgoConfig,
 		idlMutex:    make(map[string]*sync.Mutex),
 	}
 }
 
 func (rg *RGOGenerator) Run() error {
-	//err := rg.ic.LoadCache(filepath.Join(rg.rgoRepoPath, consts.IDLCacheFile))
-	//if err != nil {
-	//	return errors.New(fmt.Sprintf("Failed to load cache: %v\n", err))
-	//}
-
-	changedRepo := make(map[string]bool)
+	changedRepoCommit := make(map[string]string)
 
 	idlRepos := rg.rgoConfig.IDLRepos
 
 	//TODO: 设置并发数上限
 	//TODO: 报错记录日志？
-	for repo := range idlRepos {
+	// generate code for each idl repo
+	for _, repo := range idlRepos {
 		rg.wg.Add(1)
 
-		go func(repo string) {
+		go func(repo config.IDLRepo) {
 			defer rg.wg.Done()
 
-			filePath := filepath.Join(rg.rgoRepoPath, consts.IDLRemotePath, repo)
+			curWorkPath := fmt.Sprintf("rgo_%s", rg.curWorkPath)
+
+			filePath := filepath.Join(rg.rgoBasePath, consts.IDLPath, curWorkPath, repo.RepoName)
 			exist, err := utils.PathExist(filePath)
 			if err != nil {
 				return
 			}
 
-			if !exist || idlRepos[repo].Commit == "" {
-				err = rg.cloneOrUpdateRemoteRepo(repo, idlRepos[repo].Repo, idlRepos[repo].Branch, filePath)
+			if !exist || repo.Commit == "" {
+				commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
 				if err != nil {
-					log.Printf("Failed to clone repository %s: %v", repo, err)
+					global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
+					return
 				}
-				changedRepo[repo] = true
+				changedRepoCommit[repo.RepoName] = commit
 			} else {
 				id, err := utils.GetLatestCommitID(filePath)
 				if err != nil {
+					global.Logger.Error(fmt.Sprintf("Failed to get latest commit id for %s: %v", repo, err))
 					return
 				}
 
-				if id != idlRepos[repo].Commit {
-					err = rg.cloneOrUpdateRemoteRepo(repo, idlRepos[repo].Repo, idlRepos[repo].Branch, filePath)
+				if id != repo.Commit {
+					commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
 					if err != nil {
-						log.Printf("Failed to clone repository %s: %v", repo, err)
+						global.Logger.Error(fmt.Sprintf("Failed to clone or updaterepository %s: %v", repo, err))
+						return
 					}
-					changedRepo[repo] = true
+					changedRepoCommit[repo.RepoName] = commit
 				}
 			}
 		}(repo)
@@ -82,107 +84,28 @@ func (rg *RGOGenerator) Run() error {
 
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
-		if _, ok := changedRepo[idl.IDLRepo]; !ok {
+		if _, ok := changedRepoCommit[idl.IDLRepo]; !ok {
 			continue
 		}
+		servicePath := filepath.Join(rg.rgoBasePath, consts.RepoPath, idl.ServiceName)
 
-		rg.wg.Add(1)
-		go func(idl config.IDL) {
-			defer rg.wg.Done()
-			path := filepath.Join(rg.rgoRepoPath, consts.IDLRemotePath, idl.IDLRepo, idl.IDLPath)
+		commit := changedRepoCommit[idl.IDLRepo]
 
-			err := GenerateRGOCode(idl.IDLRepo, path, rg.rgoRepoPath)
-			if err != nil {
-				log.Printf("Failed to generate code for %s: %v", idl, err)
-				return
-			}
-		}(idl)
+		commitPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
+
+		srcPath := filepath.Join(commitPath, idl.ServiceName)
+
+		curWorkPath := fmt.Sprintf("rgo_%s", rg.curWorkPath)
+
+		idlPath := filepath.Join(rg.rgoBasePath, consts.IDLPath, curWorkPath, idl.IDLRepo, idl.IDLPath)
+
+		err := rg.generateRGOCode(rg.curWorkPath, idl.ServiceName, idlPath, srcPath)
+		if err != nil {
+			log.Printf("Failed to generate code for %s: %v", idl, err)
+			return err
+		}
+
 	}
-
-	//var changedIDLConfigs []*config.IDLConfig
-	//
-	//for _, idlConfig := range rg.rgoInfo.IDLConfig {
-	//	ic := idlConfig
-	//	rg.wg.Add(1)
-	//	rg.localRepoWg.Add(1)
-	//
-	//	go func() {
-	//		defer rg.wg.Done()
-	//		if utils.IsGitURL(ic.Repository) {
-	//			rg.localRepoWg.Done()
-	//			generatedFilePath, err := rg.updateRemoteRGOCode(&ic)
-	//			if err != nil {
-	//				log.Printf("Failed to clone repository %s: %v", ic.Repository, err)
-	//			}
-	//
-	//			path := filepath.Join(generatedFilePath, ic.IDLPath)
-	//
-	//			files, err := getThriftIncludeFiles(path)
-	//			if err != nil {
-	//				return
-	//			}
-	//
-	//			t, err := utils.GetLatestCommitTime(files)
-	//			if err != nil {
-	//				return
-	//			}
-	//
-	//			rg.ic.Cache[path] = &cache{
-	//				TimeStamp: time.Now(),
-	//			}
-	//
-	//			if c, ok := rg.ic.Cache[path]; ok && c.TimeStamp.After(t) {
-	//				return
-	//			}
-	//
-	//			err = GenerateRGOCode(ic.Repository, path, rg.rgoRepoPath)
-	//			if err != nil {
-	//				log.Printf("Failed to generate code for %s: %v", ic, err)
-	//				return
-	//			}
-	//
-	//			return
-	//		}
-	//		defer rg.localRepoWg.Done()
-	//
-	//		path := filepath.Join(ic.Repository, ic.IDLPath)
-	//
-	//		if _, ok := rg.ic.Cache[path]; ok {
-	//			changed, err := rg.ic.HashHasChanged(path)
-	//			if err != nil {
-	//				log.Printf("Failed to check if %s has changed: %v", path, err)
-	//			}
-	//			if changed {
-	//				changedIDLConfigs = append(changedIDLConfigs, &ic)
-	//			}
-	//		} else {
-	//			changedIDLConfigs = append(changedIDLConfigs, &ic)
-	//			err := rg.ic.AddHash(path)
-	//			if err != nil {
-	//				log.Printf("Failed to add hash for %s: %v", path, err)
-	//				return
-	//			}
-	//		}
-	//	}()
-	//
-	//}
-	//
-	//rg.localRepoWg.Wait()
-	//
-	//for _, v := range changedIDLConfigs {
-	//	path := filepath.Join(v.Repository, v.IDLPath)
-	//	err = GenerateRGOCode(v.Repository, path, rg.rgoRepoPath)
-	//	if err != nil {
-	//		return errors.New(fmt.Sprintf("Failed to generate code for %s: %v", v, err))
-	//	}
-	//}
-	//
-	//rg.wg.Wait()
-	//
-	//err = rg.ic.SaveCache(filepath.Join(rg.rgoRepoPath, consts.IDLCacheFile))
-	//if err != nil {
-	//	return errors.New(fmt.Sprintf("Failed to save cache: %v", err))
-	//}
 
 	return nil
 }
@@ -197,43 +120,28 @@ func (rg *RGOGenerator) getOrCreateMutex(repo string) *sync.Mutex {
 	return rg.idlMutex[repo]
 }
 
-func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch string, path string) error {
+func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch string, path string) (string, error) {
 	var id string
 	var err error
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		err = utils.CloneGitRepo(repoURL, branch, path)
 		if err != nil {
-			return err
+			return "", err
 		}
 	} else {
 		err = utils.UpdateGitRepo(repoURL, branch, path)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	id, err = utils.GetLatestCommitID(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return rg.updateRGORepoCommit(repo, id)
-}
-
-func (rg *RGOGenerator) rewriteRGOConfig(key string, value any) error {
-	//err := viper.ReadInConfig()
-	//if err != nil {
-	//	return errors.New(fmt.Sprintf("Failed to read config file: %v", err))
-	//}
-
-	viper.Set(key, value)
-
-	err := viper.WriteConfig()
-	if err != nil {
-		return errors.New(fmt.Sprintf("Failed to write config file: %v", err))
-	}
-	return nil
+	return id, rg.updateRGORepoCommit(repo, id)
 }
 
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
@@ -243,15 +151,23 @@ func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 		}
 	}()
 
-	repos := viper.Get("idl_repos").(map[string]interface{})
+	repos := viper.Get("idl_repos").([]interface{})
+	var res []config.IDLRepo
 
-	idlRepo := repos[repoName].(map[string]interface{})
+	for _, repo := range repos {
+		idlRepo := repo.(map[string]interface{})
 
-	repos[repoName] = config.IDLRepo{
-		Repo:   idlRepo["repo"].(string),
-		Branch: idlRepo["branch"].(string),
-		Commit: newCommit,
+		if idlRepo["repo_name"] == repoName {
+			idlRepo["commit"] = newCommit
+		}
+
+		res = append(res, config.IDLRepo{
+			RepoName: idlRepo["repo_name"].(string),
+			RepoGit:  idlRepo["repo_git"].(string),
+			Branch:   idlRepo["branch"].(string),
+			Commit:   idlRepo["commit"].(string),
+		})
 	}
 
-	return rg.rewriteRGOConfig("idl_repos", repos)
+	return config.RewriteRGOConfig("idl_repos", res)
 }

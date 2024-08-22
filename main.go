@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/TobiasYin/go-lsp/logs"
@@ -45,15 +46,15 @@ func init() {
 }
 
 func main() {
-	Init()
-
 	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
 
-	//server.OnDidOpenTextDocument(func(ctx context.Context, req *defines.DidOpenTextDocumentParams) (err error) {
-	//	return nil
-	//})
+	server.OnCompletion(func(ctx context.Context, req *defines.CompletionParams) (result *[]defines.CompletionItem, err error) {
+		return nil, nil
+	})
+
+	go Init()
 
 	server.Run()
 }

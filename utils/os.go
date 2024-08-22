@@ -68,3 +68,18 @@ func GetFileNameWithoutExt(filePath string) string {
 	nameWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
 	return nameWithoutExt
 }
+
+func GetCurrentPathWithUnderline() (string, error) {
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasPrefix(currentPath, "/") {
+		currentPath = currentPath[1:]
+	}
+
+	currentPath = strings.ReplaceAll(currentPath, "/", "_")
+
+	return currentPath, nil
+}

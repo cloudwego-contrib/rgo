@@ -7,11 +7,12 @@ const (
 
 const (
 	RGOConfigDefaultPath = "./rgo_config.yaml"
-	IDLRemotePath        = "remote"
-	IDLCacheFile         = ".cache/idl_cache.json"
+	IDLPath              = "idl"
+	LogPath              = "log"
+	RepoPath             = "repo"
+	PkgMetaPath          = "pkg_meta"
 )
 
 const (
-	RGOModuleName  = "rgo"
-	RGOGenCodePath = "src/rgo-gen-go"
+	RGOModuleName = "rgo"
 )

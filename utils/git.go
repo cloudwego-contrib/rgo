@@ -4,33 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 )
 
-func IsGitURL(url string) bool {
-	gitURLPattern := `^(https?|git|ssh|rsync|git@github\.com)\:\/\/|git@[^:]+:[^/]+\/[^/]+(\.git)?$`
-	re := regexp.MustCompile(gitURLPattern)
-	return re.MatchString(url)
-}
-
-func GetGitRepoName(repoURL string) (string, error) {
-	repoURL = strings.TrimSuffix(repoURL, ".git")
-
-	repoName := path.Base(repoURL)
-
-	if repoName == "" {
-		return "", fmt.Errorf("invalid repository URL: %s", repoURL)
-	}
-
-	return repoName, nil
-}
-
 func CloneGitRepo(repoURL, branch, path string) error {
-	cmd := exec.Command("git", "clone", "-b", branch, "--single-branch", repoURL, path)
+	cmd := exec.Command("git", "clone", "-b", branch, "--single-branch", "--depth", "1", repoURL, path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -78,23 +58,6 @@ func GetLatestFileCommitTime(filePath string) (time.Time, error) {
 	}
 
 	return commitTime, nil
-}
-
-func GetLatestCommitTime(filePaths []string) (time.Time, error) {
-	var latestTime time.Time
-
-	for _, file := range filePaths {
-		commitTime, err := GetLatestFileCommitTime(file)
-		if err != nil {
-			return time.Time{}, err
-		}
-
-		if commitTime.After(latestTime) {
-			latestTime = commitTime
-		}
-	}
-
-	return latestTime, nil
 }
 
 func GetLatestCommitID(filePath string) (string, error) {
