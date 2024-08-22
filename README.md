@@ -10,7 +10,13 @@ VS-Code 插件因为还未发布，所以目前只能在 VS-Code 本地调试运
 ## clone RGO 仓库
 
 ```shell
-git clone git@github.com:cloudwego-contrib/rgo.git
+git clone https://github.com/cloudwego-contrib/rgo.git
+
+cd rgo
+
+git checkout feat/new_rgo
+
+go mod tidy
 ```
 
 ## 编译生成 gopackagesdriver
@@ -20,25 +26,14 @@ cd driver
 go build -o driver .
 ```
 
-## 编译生成 VS-Code 插件 go-lsp 可执行文件
-
-```shell
-cd ~/rgo
-go build -o main .
-```
-
-## 将go-lsp 可执行文件移动到 VS-Code 插件目录
-
-```shell
-mv main ./lsp/server/bin/
-```
-
 ## 在 VS-Code 中调试运行插件
-运行 lsp/client/src/extensions.ts
+在 VS-Code 中打开克隆下来的 rgo/lsp 项目
+
+点开 ./client/src/extensions.ts 并在侧边栏中点击 Run Extension
 
 ![vscode-extension.png](./doc/vscode-extension.png)
 
-## 新建项目
+## 新建测试项目
     
 ```shell
 mkdir -p ~/rgo_test
@@ -46,7 +41,7 @@ cd ~/rgo_test
 go mod init rgo_test
 ```
 
-将 driver 文件移至根目录
+将刚刚编译的 driver 文件移至根目录
 ```shell
 mv ~/rgo/driver ~/rgo_test/
 ```

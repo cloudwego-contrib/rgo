@@ -8,12 +8,12 @@ const node_1 = require("vscode-languageclient/node");
 let client;
 function activate(context) {
     // The server is implemented in Go
-    const serverModule = context.asAbsolutePath(path.join('server', 'bin', 'main'));
+    const serverModule = context.asAbsolutePath(path.join('server', 'bin', 'go-lsp'));
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     const serverOptions = {
-        run: { command: path.join(__dirname, '../../server', 'bin', 'main') },
-        debug: { command: path.join(__dirname, '../../server', 'bin', 'main') }
+        run: { command: path.join(__dirname, '../../server', 'bin', 'go-lsp') },
+        debug: { command: path.join(__dirname, '../../server', 'bin', 'go-lsp') }
     };
     // Options to control the language client
     const clientOptions = {

@@ -13,14 +13,14 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 	// The server is implemented in Go
 	const serverModule = context.asAbsolutePath(
-		path.join('server', 'bin', 'main')
+		path.join('server', 'bin', 'go-lsp')
 	);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
-		run: { command: path.join(__dirname,'../../server', 'bin', 'main') },
-		debug: { command: path.join(__dirname,'../../server', 'bin', 'main') }
+		run: { command: path.join(__dirname,'../../server', 'bin', 'go-lsp') },
+		debug: { command: path.join(__dirname,'../../server', 'bin', 'go-lsp') }
 	};
 
 	// Options to control the language client
