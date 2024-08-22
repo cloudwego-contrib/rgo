@@ -15,14 +15,15 @@ git clone https://github.com/cloudwego-contrib/rgo.git
 cd rgo
 
 git checkout feat/new_rgo
-
-go mod tidy
 ```
 
 ## 编译生成 gopackagesdriver
 
 ```shell
 cd driver
+
+go mod tidy
+
 go build -o driver .
 ```
 
@@ -31,6 +32,8 @@ go build -o driver .
 
 ![doc/vscode_open.png](doc/vscode_open.png)
 
+
+执行以下命令安装依赖
 ```shell
 npm install
 ```
