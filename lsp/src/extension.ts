@@ -1,5 +1,4 @@
 import * as path from 'path';
-// @ts-ignore
 import * as vscode from 'vscode';
 import {
 	LanguageClient,
@@ -28,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 		documentSelector: [{ scheme: 'file', language: 'go' }],
 		synchronize: {
 			// Notify the server about file changes to '.clientrc files contained in the workspace
-			fileEvents: vscode.vworkspace.createFileSystemWatcher('**/.clientrc')
+			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
 		}
 	};
 
