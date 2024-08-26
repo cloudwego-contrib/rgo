@@ -55,7 +55,7 @@ func (rg *RGOGenerator) Run() error {
 			}
 
 			if !exist || repo.Commit == "" {
-				commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
+				commit, err := rg.cloneOrUpdateRemoteRepo(repo, filePath)
 				if err != nil {
 					global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 					return
@@ -69,7 +69,7 @@ func (rg *RGOGenerator) Run() error {
 				}
 
 				if id != repo.Commit {
-					commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
+					commit, err := rg.cloneOrUpdateRemoteRepo(repo, filePath)
 					if err != nil {
 						global.Logger.Error(fmt.Sprintf("Failed to clone or updaterepository %s: %v", repo, err))
 						return
@@ -120,17 +120,17 @@ func (rg *RGOGenerator) getOrCreateMutex(repo string) *sync.Mutex {
 	return rg.idlMutex[repo]
 }
 
-func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch string, path string) (string, error) {
+func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo config.IDLRepo, path string) (string, error) {
 	var id string
 	var err error
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
-		err = utils.CloneGitRepo(repoURL, branch, path)
+		err = utils.CloneGitRepo(repo.RepoName, repo.Branch, path)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		err = utils.UpdateGitRepo(repoURL, branch, path)
+		err = utils.UpdateGitRepo(repo.Branch, path)
 		if err != nil {
 			return "", err
 		}
@@ -141,7 +141,7 @@ func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch str
 		return "", err
 	}
 
-	return id, rg.updateRGORepoCommit(repo, id)
+	return id, rg.updateRGORepoCommit(repo.RepoName, id)
 }
 
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
