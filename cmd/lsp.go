@@ -18,7 +18,6 @@ func init() {
 	defer func() {
 		logs.Init(logger)
 	}()
-	//todo：完善 lsp logs
 	logPath = flag.String("logs", "", "logs file path")
 	if logPath == nil || *logPath == "" {
 		logger = log.New(os.Stderr, "", 0)
@@ -38,7 +37,7 @@ func init() {
 	panic(fmt.Sprintf("logs init error: %v", *logPath))
 }
 
-func main() {
+func RunLspServer() {
 	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
@@ -46,8 +45,6 @@ func main() {
 	server.OnCompletion(func(ctx context.Context, req *defines.CompletionParams) (result *[]defines.CompletionItem, err error) {
 		return nil, nil
 	})
-
-	go Init()
 
 	server.Run()
 }

@@ -15,8 +15,8 @@ import (
 )
 
 type RGOGenerator struct {
-	rgoBasePath string
-	curWorkPath string
+	RGOBasePath string
+	CurWorkPath string
 	rgoConfig   *config.RGOConfig
 	mu          sync.Mutex
 	idlMutex    map[string]*sync.Mutex
@@ -25,8 +25,8 @@ type RGOGenerator struct {
 
 func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath, curWorkPath string) *RGOGenerator {
 	return &RGOGenerator{
-		rgoBasePath: rgoBasePath,
-		curWorkPath: curWorkPath,
+		RGOBasePath: rgoBasePath,
+		CurWorkPath: curWorkPath,
 		rgoConfig:   rgoConfig,
 		idlMutex:    make(map[string]*sync.Mutex),
 	}
@@ -46,9 +46,9 @@ func (rg *RGOGenerator) Run() error {
 		go func(repo config.IDLRepo) {
 			defer rg.wg.Done()
 
-			curWorkPath := fmt.Sprintf("rgo_%s", rg.curWorkPath)
+			curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
 
-			filePath := filepath.Join(rg.rgoBasePath, consts.IDLPath, curWorkPath, repo.RepoName)
+			filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, repo.RepoName)
 			exist, err := utils.PathExist(filePath)
 			if err != nil {
 				return
@@ -87,7 +87,7 @@ func (rg *RGOGenerator) Run() error {
 		if _, ok := changedRepoCommit[idl.IDLRepo]; !ok {
 			continue
 		}
-		servicePath := filepath.Join(rg.rgoBasePath, consts.RepoPath, idl.ServiceName)
+		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.ServiceName)
 
 		commit := changedRepoCommit[idl.IDLRepo]
 
@@ -95,11 +95,11 @@ func (rg *RGOGenerator) Run() error {
 
 		srcPath := filepath.Join(commitPath, idl.ServiceName)
 
-		curWorkPath := fmt.Sprintf("rgo_%s", rg.curWorkPath)
+		curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
 
-		idlPath := filepath.Join(rg.rgoBasePath, consts.IDLPath, curWorkPath, idl.IDLRepo, idl.IDLPath)
+		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, idl.IDLRepo, idl.IDLPath)
 
-		err := rg.generateRGOCode(rg.curWorkPath, idl.ServiceName, idlPath, srcPath)
+		err := rg.generateRGOCode(rg.CurWorkPath, idl.ServiceName, idlPath, srcPath)
 		if err != nil {
 			log.Printf("Failed to generate code for %s: %v", idl, err)
 			return err

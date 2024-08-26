@@ -16,18 +16,19 @@ import (
 	"syscall"
 )
 
-var IDLConfigPath string
+var (
+	idlConfigPath string
 
-func Init() {
-	//todo: abs path
-	// 先查本地
-	// 不用环境变量
-	IDLConfigPath = os.Getenv(consts.IDLConfigPath)
-	if IDLConfigPath == "" {
-		IDLConfigPath = consts.RGOConfigDefaultPath
-	}
+	c *config.RGOConfig
+	g *generator.RGOGenerator
+)
 
-	c, err := config.ReadConfig(IDLConfigPath)
+func init() {
+	idlConfigPath = consts.RGOConfigPath
+
+	var err error
+
+	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
 		panic("read rgo_config failed, err:" + err.Error())
 	}
@@ -35,7 +36,7 @@ func Init() {
 	rgoBasePath := os.Getenv(consts.RGOCachePath)
 	if rgoBasePath == "" {
 		//todo:目录命名
-		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), "RGO", "cache")
+		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
 	}
 
 	currentPath, err := utils.GetCurrentPathWithUnderline()
@@ -43,21 +44,22 @@ func Init() {
 		panic("get current path failed, err:" + err.Error())
 	}
 
-	//todo 在外面init
 	global.InitLogger(rgoBasePath, currentPath)
 
-	g := generator.NewRGOGenerator(c, rgoBasePath, currentPath)
+	g = generator.NewRGOGenerator(c, rgoBasePath, currentPath)
+}
 
-	go WatchConfig(rgoBasePath, currentPath)
+func RGORun() {
+	go WatchConfig(g)
 
-	err = g.Run()
+	err := g.Run()
 	if err != nil {
 		global.Logger.Error("run rgo generator failed", zap.Error(err))
 	}
 
 }
 
-func WatchConfig(rgoBasePath, curWorkPath string) {
+func WatchConfig(g *generator.RGOGenerator) {
 	viper.WatchConfig()
 
 	// 定义回调函数
@@ -65,14 +67,14 @@ func WatchConfig(rgoBasePath, curWorkPath string) {
 		log.Printf("Config file changed: %s", e.Name)
 
 		viper.Reset()
-		c, err := config.ReadConfig(IDLConfigPath)
+		c, err := config.ReadConfig(idlConfigPath)
 		if err != nil {
 			panic("read rgo_config failed, err:" + err.Error())
 		}
 
 		log.Printf("Updated config: %v", c)
 
-		g := generator.NewRGOGenerator(c, rgoBasePath, curWorkPath)
+		g := generator.NewRGOGenerator(c, g.RGOBasePath, g.CurWorkPath)
 
 		if err := g.Run(); err != nil {
 			log.Printf("Failed to run generator with updated config: %v", err)

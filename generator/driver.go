@@ -50,7 +50,7 @@ func (rg *RGOGenerator) generateRGOPackages(curWorkPath, serviceName, path strin
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
 
-	outputFile := filepath.Join(rg.rgoBasePath, consts.PkgMetaPath, curWorkPath, serviceName, "rgo_packages.json")
+	outputFile := filepath.Join(rg.RGOBasePath, consts.PkgMetaPath, curWorkPath, serviceName, "rgo_packages.json")
 
 	err = os.MkdirAll(filepath.Dir(outputFile), 0755)
 	if err != nil {

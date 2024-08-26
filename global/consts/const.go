@@ -6,11 +6,11 @@ const (
 )
 
 const (
-	RGOConfigDefaultPath = "./rgo_config.yaml"
-	IDLPath              = "idl"
-	LogPath              = "log"
-	RepoPath             = "repo"
-	PkgMetaPath          = "pkg_meta"
+	RGOConfigPath = "./rgo_config.yaml"
+	IDLPath       = "idl"
+	LogPath       = "log"
+	RepoPath      = "repo"
+	PkgMetaPath   = "pkg_meta"
 )
 
 const (
