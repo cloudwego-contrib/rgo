@@ -11,14 +11,6 @@ import (
 	"os"
 )
 
-func strPtr(str string) *string {
-	return &str
-}
-
-func boolPtr(f bool) *bool {
-	return &f
-}
-
 var logPath *string
 
 func init() {
@@ -26,6 +18,7 @@ func init() {
 	defer func() {
 		logs.Init(logger)
 	}()
+	//todo：完善 lsp logs
 	logPath = flag.String("logs", "", "logs file path")
 	if logPath == nil || *logPath == "" {
 		logger = log.New(os.Stderr, "", 0)

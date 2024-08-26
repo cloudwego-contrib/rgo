@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 func CloneGitRepo(repoURL, branch, path string) error {
@@ -37,35 +36,13 @@ func UpdateGitRepo(repoURL, branch, path string) error {
 	return nil
 }
 
-func GetLatestFileCommitTime(filePath string) (time.Time, error) {
-	absPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	cmd := exec.Command("git", "log", "-1", "--format=%cd", "--date=iso", "--", absPath)
-	cmd.Dir = filepath.Dir(filePath)
-
-	out, err := cmd.Output()
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to get the latest commit time: %v", err)
-	}
-
-	commitTimeStr := strings.TrimSpace(string(out))
-	commitTime, err := time.Parse("2006-01-02 15:04:05 -0700", commitTimeStr)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to parse commit time: %v", err)
-	}
-
-	return commitTime, nil
-}
-
 func GetLatestCommitID(filePath string) (string, error) {
 	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return "", err
 	}
 
+	//todo 判断是否最优
 	cmd := exec.Command("git", "log", "-1", "--format=%H")
 	cmd.Dir = absPath
 

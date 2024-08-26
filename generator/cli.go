@@ -63,7 +63,7 @@ func generateClientCode(serviceName, idlPath, rgoSrcPath string) error {
 
 	fset := token.NewFileSet()
 
-	f, err := buildThriftAstFile(serviceName, rgoSrcPath, thriftFile)
+	f, err := buildThriftAstFile(serviceName, thriftFile)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func initGoMod(moduleName, path string) error {
 	return nil
 }
 
-func buildThriftAstFile(serviceName, path string, thrift *parser.Thrift) (*ast.File, error) {
+func buildThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File, error) {
 	var namespace string
 
 	for _, v := range thrift.Namespaces {

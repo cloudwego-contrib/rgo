@@ -19,6 +19,9 @@ import (
 var IDLConfigPath string
 
 func Init() {
+	//todo: abs path
+	// 先查本地
+	// 不用环境变量
 	IDLConfigPath = os.Getenv(consts.IDLConfigPath)
 	if IDLConfigPath == "" {
 		IDLConfigPath = consts.RGOConfigDefaultPath
@@ -29,8 +32,9 @@ func Init() {
 		panic("read rgo_config failed, err:" + err.Error())
 	}
 
-	rgoBasePath := os.Getenv(consts.RGORepositoryPath)
+	rgoBasePath := os.Getenv(consts.RGOCachePath)
 	if rgoBasePath == "" {
+		//todo:目录命名
 		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), "RGO", "cache")
 	}
 
@@ -39,6 +43,7 @@ func Init() {
 		panic("get current path failed, err:" + err.Error())
 	}
 
+	//todo 在外面init
 	global.InitLogger(rgoBasePath, currentPath)
 
 	g := generator.NewRGOGenerator(c, rgoBasePath, currentPath)

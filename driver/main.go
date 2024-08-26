@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/cloudwego-contrib/rgo/driver/internal/utils"
 	"golang.org/x/tools/go/packages"
@@ -34,6 +33,7 @@ type DriverRequest struct {
 
 var rgoRepoPath string
 
+// todo: 从配置文件中读取
 func init() {
 	rgoRepoPath = "/Users/violapioggia/RGO"
 }
@@ -58,7 +58,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	)
 
 	req := &DriverRequest{}
-	if err := json.NewDecoder(in).Decode(&req); err != nil {
+	if err := sonic.NewDecoder(in).Decode(&req); err != nil {
 		return fmt.Errorf("unable to decode driver request: %w", err)
 	}
 
@@ -89,6 +89,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		}
 	}
 
+	//todo: 找当前目录
 	basePath := filepath.Join(rgoRepoPath, "cache", "pkg_meta")
 
 	targetPkgs, err = getTargetPackages(basePath)
@@ -101,6 +102,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		ret.Packages = append(ret.Packages, pkg)
 	}
 
+	//todo: 添加注入依赖包
 	ctxPackage, _ := packages.Load(cfg, "context")
 	ret.Packages = append(ret.Packages, ctxPackage...)
 
@@ -113,7 +115,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	kitexClientOptPackage, _ := packages.Load(cfg, "github.com/cloudwego/kitex/client/callopt")
 	ret.Packages = append(ret.Packages, kitexClientOptPackage...)
 
-	data, err := json.Marshal(ret)
+	data, err := sonic.Marshal(ret)
 	if err != nil {
 		return fmt.Errorf("json marshal error: %v", err.Error())
 	}
@@ -148,7 +150,7 @@ func getTargetPackages(basePath string) ([]*packages.Package, error) {
 				}
 
 				var response []*packages.Package
-				if err := json.Unmarshal(data, &response); err != nil {
+				if err := sonic.Unmarshal(data, &response); err != nil {
 					return fmt.Errorf("failed to parse json file %s: %v", jsonFilePath, err)
 				}
 

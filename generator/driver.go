@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/bytedance/sonic"
 	"github.com/cloudwego-contrib/rgo/global/consts"
 	"golang.org/x/tools/go/packages"
 	"os"
@@ -31,6 +31,7 @@ func (rg *RGOGenerator) generateRGOPackages(curWorkPath, serviceName, path strin
 		return fmt.Errorf("failed to load packages: %v", err)
 	}
 
+	//todo
 	Packages := make([]*packages.Package, len(pkgs))
 
 	for i, pkg := range pkgs {
@@ -44,7 +45,7 @@ func (rg *RGOGenerator) generateRGOPackages(curWorkPath, serviceName, path strin
 		}
 	}
 
-	data, err := json.Marshal(Packages)
+	data, err := sonic.Marshal(Packages)
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
