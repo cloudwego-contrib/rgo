@@ -8,7 +8,6 @@ import (
 	"github.com/cloudwego-contrib/rgo/utils"
 	"github.com/spf13/viper"
 	"log"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -55,7 +54,7 @@ func (rg *RGOGenerator) Run() error {
 			}
 
 			if !exist || repo.Commit == "" {
-				commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
+				commit, err := rg.cloneRemoteRepo(repo, filePath)
 				if err != nil {
 					global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 					return
@@ -69,7 +68,7 @@ func (rg *RGOGenerator) Run() error {
 				}
 
 				if id != repo.Commit {
-					commit, err := rg.cloneOrUpdateRemoteRepo(repo.RepoName, repo.RepoGit, repo.Branch, filePath)
+					commit, err := rg.updateRemoteRepo(repo, filePath)
 					if err != nil {
 						global.Logger.Error(fmt.Sprintf("Failed to clone or updaterepository %s: %v", repo, err))
 						return
@@ -91,9 +90,7 @@ func (rg *RGOGenerator) Run() error {
 
 		commit := changedRepoCommit[idl.IDLRepo]
 
-		commitPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
-
-		srcPath := filepath.Join(commitPath, idl.ServiceName)
+		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
 
 		curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
 
@@ -120,20 +117,13 @@ func (rg *RGOGenerator) getOrCreateMutex(repo string) *sync.Mutex {
 	return rg.idlMutex[repo]
 }
 
-func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch string, path string) (string, error) {
+func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path string) (string, error) {
 	var id string
 	var err error
 
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		err = utils.CloneGitRepo(repoURL, branch, path)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		err = utils.UpdateGitRepo(repoURL, branch, path)
-		if err != nil {
-			return "", err
-		}
+	err = utils.CloneGitRepo(repo.RepoGit, repo.Branch, path)
+	if err != nil {
+		return "", err
 	}
 
 	id, err = utils.GetLatestCommitID(path)
@@ -141,7 +131,24 @@ func (rg *RGOGenerator) cloneOrUpdateRemoteRepo(repo, repoURL string, branch str
 		return "", err
 	}
 
-	return id, rg.updateRGORepoCommit(repo, id)
+	return id, rg.updateRGORepoCommit(repo.RepoName, id)
+}
+
+func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path string) (string, error) {
+	var id string
+	var err error
+
+	err = utils.UpdateGitRepo(repo.RepoGit, repo.Branch, path)
+	if err != nil {
+		return "", err
+	}
+
+	id, err = utils.GetLatestCommitID(path)
+	if err != nil {
+		return "", err
+	}
+
+	return id, rg.updateRGORepoCommit(repo.RepoName, id)
 }
 
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {

@@ -31,19 +31,9 @@ func (rg *RGOGenerator) generateRGOPackages(curWorkPath, serviceName, path strin
 		return fmt.Errorf("failed to load packages: %v", err)
 	}
 
-	//todo
-	Packages := make([]*packages.Package, len(pkgs))
+	Packages := make([]*packages.Package, 0)
 
-	for i, pkg := range pkgs {
-		Packages[i] = &packages.Package{
-			ID:              pkg.ID,
-			Name:            pkg.Name,
-			PkgPath:         pkg.PkgPath,
-			GoFiles:         pkg.GoFiles,
-			CompiledGoFiles: pkg.CompiledGoFiles,
-			Imports:         pkg.Imports,
-		}
-	}
+	Packages = append(Packages, pkgs...)
 
 	data, err := sonic.Marshal(Packages)
 	if err != nil {

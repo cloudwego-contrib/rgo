@@ -96,6 +96,17 @@ func initGoMod(moduleName, path string) error {
 		return fmt.Errorf("failed to initialize go.mod in path '%s': %w", path, err)
 	}
 
+	// Set Go version to 1.18
+	cmd = exec.Command("go", "mod", "edit", "-go=1.18")
+	cmd.Dir = path
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to set Go version 1.18 in path '%s': %w", path, err)
+	}
+
 	return nil
 }
 

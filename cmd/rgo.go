@@ -33,9 +33,8 @@ func init() {
 		panic("read rgo_config failed, err:" + err.Error())
 	}
 
-	rgoBasePath := os.Getenv(consts.RGOCachePath)
+	rgoBasePath := os.Getenv(consts.RGOBasePath)
 	if rgoBasePath == "" {
-		//todo:目录命名
 		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
 	}
 

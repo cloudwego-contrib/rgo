@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/bytedance/sonic"
 	"github.com/cloudwego-contrib/rgo/driver/internal/utils"
 	"golang.org/x/tools/go/packages"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -31,11 +34,21 @@ type DriverRequest struct {
 	Overlay map[string][]byte `json:"overlay"`
 }
 
-var rgoRepoPath string
+var (
+	rgoBasePath string
+)
+
+const (
+	RGOBasePath = "RGO_BASE_PATH"
+)
 
 // todo: 从配置文件中读取
 func init() {
-	rgoRepoPath = "/Users/violapioggia/RGO"
+	rgoBasePath = os.Getenv(RGOBasePath)
+	if rgoBasePath == "" {
+		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
+	}
+
 }
 
 func main() {
@@ -58,7 +71,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	)
 
 	req := &DriverRequest{}
-	if err := sonic.NewDecoder(in).Decode(&req); err != nil {
+	if err := json.NewDecoder(in).Decode(&req); err != nil {
 		return fmt.Errorf("unable to decode driver request: %w", err)
 	}
 
@@ -89,12 +102,15 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		}
 	}
 
-	//todo: 找当前目录
-	basePath := filepath.Join(rgoRepoPath, "cache", "pkg_meta")
+	basePath := filepath.Join(rgoBasePath, "pkg_meta")
 
-	targetPkgs, err = getTargetPackages(basePath)
+	curWorkPath, err := utils.GetCurrentPathWithUnderline()
+
+	targetPath := filepath.Join(basePath, curWorkPath)
+
+	targetPkgs, err = getTargetPackages(targetPath)
 	if err != nil {
-		//TODO: log error
+		log.Printf("Error getting target packages from path %s: %v", targetPath, err)
 	}
 
 	for _, pkg := range targetPkgs {
@@ -124,46 +140,39 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	return err
 }
 
-func getTargetPackages(basePath string) ([]*packages.Package, error) {
+func getTargetPackages(path string) ([]*packages.Package, error) {
 	var results []*packages.Package
 
-	// 递归函数，用于查找目标文件
-	var findPackages func(string) error
-	findPackages = func(path string) error {
-		directories, err := os.ReadDir(path)
-		if err != nil {
-			return fmt.Errorf("failed to read directory: %v", err)
-		}
+	// Check if the path directory exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return results, nil
+	}
 
-		for _, dir := range directories {
-			if dir.IsDir() {
-				// 递归处理子目录
-				if err := findPackages(filepath.Join(path, dir.Name())); err != nil {
-					return err
-				}
-			} else if dir.Name() == "rgo_packages.json" {
-				// 找到目标文件，处理它
-				jsonFilePath := filepath.Join(path, dir.Name())
+	// Read all subdirectories and files under the path directory
+	directories, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %v", err)
+	}
+
+	// Traverse the first level subdirectory
+	for _, dir := range directories {
+		if dir.IsDir() {
+			jsonFilePath := filepath.Join(path, dir.Name(), "rgo_packages.json")
+
+			if _, err := os.Stat(jsonFilePath); err == nil {
 				data, err := os.ReadFile(jsonFilePath)
 				if err != nil {
-					return fmt.Errorf("failed to read json file %s: %v", jsonFilePath, err)
+					return nil, fmt.Errorf("failed to read json file %s: %v", jsonFilePath, err)
 				}
 
 				var response []*packages.Package
 				if err := sonic.Unmarshal(data, &response); err != nil {
-					return fmt.Errorf("failed to parse json file %s: %v", jsonFilePath, err)
+					return nil, fmt.Errorf("failed to parse json file %s: %v", jsonFilePath, err)
 				}
 
 				results = append(results, response...)
 			}
 		}
-
-		return nil
-	}
-
-	// 从基目录开始递归查找
-	if err := findPackages(basePath); err != nil {
-		return nil, err
 	}
 
 	return results, nil
