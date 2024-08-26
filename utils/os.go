@@ -75,12 +75,17 @@ func GetCurrentPathWithUnderline() (string, error) {
 		return "", err
 	}
 
-	//todo:windows
-	if strings.HasPrefix(currentPath, "/") {
-		currentPath = currentPath[1:]
+	// Windows
+	if strings.HasPrefix(currentPath, "\\") || strings.Contains(currentPath, ":\\") {
+		currentPath = strings.ReplaceAll(currentPath, ":", "")
+		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
+	} else {
+		// Unix
+		if strings.HasPrefix(currentPath, "/") {
+			currentPath = currentPath[1:]
+		}
+		currentPath = strings.ReplaceAll(currentPath, "/", "_")
 	}
-
-	currentPath = strings.ReplaceAll(currentPath, "/", "_")
 
 	return currentPath, nil
 }

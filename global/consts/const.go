@@ -1,8 +1,7 @@
 package consts
 
 const (
-	IDLConfigPath = "IDL_CONFIG_PATH"
-	RGOBasePath   = "RGO_BASE_PATH"
+	RGOBasePath = "RGO_BASE_PATH"
 )
 
 const (

@@ -42,7 +42,6 @@ const (
 	RGOBasePath = "RGO_BASE_PATH"
 )
 
-// todo: 从配置文件中读取
 func init() {
 	rgoBasePath = os.Getenv(RGOBasePath)
 	if rgoBasePath == "" {
