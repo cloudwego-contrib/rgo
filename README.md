@@ -15,26 +15,37 @@ git clone https://github.com/cloudwego-contrib/rgo.git
 cd rgo
 
 git checkout feat/new_rgo
-
-go mod tidy
 ```
 
 ## 编译生成 gopackagesdriver
 
 ```shell
 cd driver
+
+go mod tidy
+
 go build -o driver .
 ```
 
 ## 在 VS-Code 中调试运行插件
 在 VS-Code 中打开克隆下来的 rgo/lsp 项目
 
+![doc/vscode_open.png](doc/vscode_open.png)
+
+
+执行以下命令安装依赖
+```shell
+npm install
+```
+
 点开 ./client/src/extensions.ts 并在侧边栏中点击 Run Extension
 
 ![vscode-extension.png](./doc/vscode-extension.png)
 
 ## 新建测试项目
-    
+
+然后会弹出搭载了 go-lsp 插件的 vscode 窗口，新建一个新的项目用于展示效果
+
 ```shell
 mkdir -p ~/rgo_test
 cd ~/rgo_test
