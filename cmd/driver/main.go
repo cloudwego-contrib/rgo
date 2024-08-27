@@ -15,32 +15,53 @@ import (
 	"strings"
 )
 
-type LoadMode int
-
-type DriverRequest struct {
-	Mode LoadMode `json:"mode"`
-
-	// Env specifies the environment the underlying build system should be run in.
-	Env []string `json:"env"`
-
-	// BuildFlags are flags that should be passed to the underlying build system.
-	BuildFlags []string `json:"build_flags"`
-
-	// Tests specifies whether the patterns should also return test packages.
-	Tests bool `json:"tests"`
-
-	// Overlay maps file paths (relative to the driver's working directory)
-	// to the contents of overlay files (see Config.Overlay).
-	Overlay map[string][]byte `json:"overlay"`
-}
-
-var (
-	rgoBasePath string
-)
-
 const (
 	RGOBasePath = "RGO_BASE_PATH"
 )
+
+type (
+	DefaultPackageLoader struct {
+		Ret *packages.DriverResponse
+	}
+
+	LoadMode int
+
+	DriverRequest struct {
+		Mode LoadMode `json:"mode"`
+
+		// Env specifies the environment the underlying build system should be run in.
+		Env []string `json:"env"`
+
+		// BuildFlags are flags that should be passed to the underlying build system.
+		BuildFlags []string `json:"build_flags"`
+
+		// Tests specifies whether the patterns should also return test packages.
+		Tests bool `json:"tests"`
+
+		// Overlay maps file paths (relative to the driver's working directory)
+		// to the contents of overlay files (see Config.Overlay).
+		Overlay map[string][]byte `json:"overlay"`
+	}
+)
+
+var (
+	rgoBasePath string
+
+	_ GoPackagesDriverLoad = (*DefaultPackageLoader)(nil)
+)
+
+type GoPackagesDriverLoad interface {
+	// pkgs is a list of package patterns to load.
+	LoadPackages(cfg *packages.Config, pkgs ...string) []*packages.Package
+}
+
+func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string) []*packages.Package {
+	for _, pkg := range pkgs {
+		p, _ := packages.Load(cfg, pkg)
+		t.Ret.Packages = append(t.Ret.Packages, p...)
+	}
+	return t.Ret.Packages
+}
 
 func init() {
 	rgoBasePath = os.Getenv(RGOBasePath)
@@ -92,7 +113,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	ret, b, err := utils.UnsafeGetDefaultDriverResponse(cfg, args...)
 	if err != nil || b {
-		panic(err)
+		return fmt.Errorf("failed to get default driver response: %v", err)
 	}
 
 	for k := len(ret.Packages) - 1; k >= 0; k-- {
@@ -117,18 +138,9 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		ret.Packages = append(ret.Packages, pkg)
 	}
 
-	//todo: 添加注入依赖包
-	ctxPackage, _ := packages.Load(cfg, "context")
-	ret.Packages = append(ret.Packages, ctxPackage...)
-
-	fmtPackage, _ := packages.Load(cfg, "fmt")
-	ret.Packages = append(ret.Packages, fmtPackage...)
-
-	kitexClientPackage, _ := packages.Load(cfg, "github.com/cloudwego/kitex/client")
-	ret.Packages = append(ret.Packages, kitexClientPackage...)
-
-	kitexClientOptPackage, _ := packages.Load(cfg, "github.com/cloudwego/kitex/client/callopt")
-	ret.Packages = append(ret.Packages, kitexClientOptPackage...)
+	var loader DefaultPackageLoader
+	loader.Ret = ret
+	loader.LoadPackages(cfg, "context", "fmt", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt")
 
 	data, err := sonic.Marshal(ret)
 	if err != nil {

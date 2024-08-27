@@ -3,8 +3,8 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/global/consts"
-	"github.com/cloudwego-contrib/rgo/utils"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
 	"go/format"
@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func (rg *RGOGenerator) generateRGOCode(curWorkPath, serviceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenerateRGOCode(curWorkPath, serviceName, idlPath, rgoSrcPath string) error {
 	exist, err := utils.FileExistsInPath(rgoSrcPath, "go.mod")
 	if err != nil {
 		return err
@@ -37,12 +37,12 @@ func (rg *RGOGenerator) generateRGOCode(curWorkPath, serviceName, idlPath, rgoSr
 
 	switch fileType {
 	case ".thrift":
-		err := generateThriftCodeFromSdk(idlPath, rgoSrcPath)
+		err := GenRgoBaseCode(idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
 
-		err = generateClientCode(serviceName, idlPath, rgoSrcPath)
+		err = rg.GenRgoClientCode(serviceName, idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func (rg *RGOGenerator) generateRGOCode(curWorkPath, serviceName, idlPath, rgoSr
 	}
 }
 
-func generateClientCode(serviceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenRgoClientCode(serviceName, idlPath, rgoSrcPath string) error {
 	thriftFile, err := parseIDLFile(idlPath)
 	if err != nil {
 		return err

@@ -3,7 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/rgo/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"golang.org/x/tools/go/packages"
 	"os"
 	"path/filepath"

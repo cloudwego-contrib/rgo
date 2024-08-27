@@ -1,15 +1,14 @@
 package main
 
 import (
-	"github.com/cloudwego-contrib/rgo/generator"
-	"github.com/cloudwego-contrib/rgo/global"
-	"github.com/cloudwego-contrib/rgo/global/config"
-	"github.com/cloudwego-contrib/rgo/global/consts"
-	"github.com/cloudwego-contrib/rgo/utils"
+	"github.com/cloudwego-contrib/rgo/pkg/generator"
+	"github.com/cloudwego-contrib/rgo/pkg/global"
+	config2 "github.com/cloudwego-contrib/rgo/pkg/global/config"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,7 +18,7 @@ import (
 var (
 	idlConfigPath string
 
-	c *config.RGOConfig
+	c *config2.RGOConfig
 	g *generator.RGOGenerator
 )
 
@@ -27,11 +26,6 @@ func init() {
 	idlConfigPath = consts.RGOConfigPath
 
 	var err error
-
-	c, err = config.ReadConfig(idlConfigPath)
-	if err != nil {
-		panic("read rgo_config failed, err:" + err.Error())
-	}
 
 	rgoBasePath := os.Getenv(consts.RGOBasePath)
 	if rgoBasePath == "" {
@@ -45,42 +39,39 @@ func init() {
 
 	global.InitLogger(rgoBasePath, currentPath)
 
+	c, err = config2.ReadConfig(idlConfigPath)
+	if err != nil {
+		global.Logger.Warn("read rgo_config failed", zap.Error(err))
+	}
+
 	g = generator.NewRGOGenerator(c, rgoBasePath, currentPath)
 }
 
 func RGORun() {
 	go WatchConfig(g)
 
-	err := g.Run()
-	if err != nil {
-		global.Logger.Error("run rgo generator failed", zap.Error(err))
-	}
-
+	g.Run()
 }
 
 func WatchConfig(g *generator.RGOGenerator) {
 	viper.WatchConfig()
 
-	// 定义回调函数
-	config.ConfigChangeHandler = func(e fsnotify.Event) {
-		log.Printf("Config file changed: %s", e.Name)
-
+	// hook function for config file change
+	config2.ConfigChangeHandler = func(e fsnotify.Event) {
 		viper.Reset()
-		c, err := config.ReadConfig(idlConfigPath)
+		c, err := config2.ReadConfig(idlConfigPath)
 		if err != nil {
-			panic("read rgo_config failed, err:" + err.Error())
+			global.Logger.Error("read rgo_config failed", zap.Error(err))
 		}
 
-		log.Printf("Updated config: %v", c)
+		global.Logger.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
 
 		g := generator.NewRGOGenerator(c, g.RGOBasePath, g.CurWorkPath)
 
-		if err := g.Run(); err != nil {
-			log.Printf("Failed to run generator with updated config: %v", err)
-		}
+		g.Run()
 	}
 
-	viper.OnConfigChange(config.ConfigChangeHandler)
+	viper.OnConfigChange(config2.ConfigChangeHandler)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

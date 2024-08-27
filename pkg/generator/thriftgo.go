@@ -3,7 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego/thriftgo/parser"
 	"github.com/cloudwego/thriftgo/sdk"
 	"os"
@@ -34,7 +34,7 @@ func generateThriftCode(idlPath, rgoSrcPath string) error {
 	return nil
 }
 
-func generateThriftCodeFromSdk(idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenRgoBaseCode(idlPath, rgoSrcPath string) error {
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	args := []string{

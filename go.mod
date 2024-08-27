@@ -8,8 +8,10 @@ require (
 	github.com/cloudwego/thriftgo v0.3.15
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/google/uuid v1.6.0
+	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.21.0
+	golang.org/x/sync v0.8.0
 	golang.org/x/tools v0.24.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
@@ -41,7 +43,6 @@ require (
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

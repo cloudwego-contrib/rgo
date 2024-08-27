@@ -1,0 +1,14 @@
+idl_repos:
+    - repo_name: repo_name1
+      repo_git: git@github.com:ViolaPioggia/IDL_REPO.git
+      branch: main
+      commit: fd534d04f6a868fa9e727161ec0625fb71ecc7bc
+idls:
+    - idl_path: ./echo.thrift
+      idl_repo: repo_name1
+      service_address: service-one.example.com
+      service_name: service_one
+    - idl_path: ./hello.thrift
+      idl_repo: repo_name1
+      service_address: service-two.example.com
+      service_name: service_two

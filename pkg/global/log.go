@@ -2,7 +2,7 @@ package global
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
