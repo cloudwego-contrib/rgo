@@ -7,18 +7,28 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--disable-extensions"
+        "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
-        "${workspaceFolder}/extension/dist/**/*.js"
+        "${workspaceFolder}/out/**/*.js"
       ],
       "sourceMaps": true,
       "smartStep": true,
       "env": {
         "VSCODE_GO_IN_TEST": ""
       },
-      "cwd": "${workspaceFolder}/extension"
+      "cwd": "${workspaceFolder}/extension",
+      "preLaunchTask": "npm: compile"
+    }
+  ],
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "compile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }

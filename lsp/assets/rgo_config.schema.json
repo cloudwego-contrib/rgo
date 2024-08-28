@@ -3,19 +3,22 @@
   "title": "rgo_config.yaml",
   "type": "object",
   "properties": {
-    "idl_repo": {
+    "idl_repos": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "repo_name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of the repository. This repo_name needs as same as the repo_name in idl"
           },
-          "repo_git": {
-            "type": "string"
+          "git_url": {
+            "type": "string",
+            "description": "The git url of the repository"
           },
           "branch": {
-            "type": "string"
+            "type": "string",
+            "description": "The branch of the repository"
           },
           "commit": {
             "type": "string"
@@ -23,7 +26,7 @@
         },
         "required": [
           "repo_name",
-          "repo_git",
+          "git_url",
           "branch"
         ]
       }
@@ -36,11 +39,9 @@
           "idl_path": {
             "type": "string"
           },
-          "idl_repo": {
-            "type": "string"
-          },
-          "service_address": {
-            "type": "string"
+          "repo_name": {
+            "type": "string",
+            "description": "The name of the repository. This repo_name needs as same as the repo_name in idl_repo"
           },
           "service_name": {
             "type": "string"
@@ -48,9 +49,7 @@
         },
         "required": [
           "idl_repo",
-          "idl_path",
-          "service_address",
-          "service_name"
+          "idl_path"
         ]
       }
     }
