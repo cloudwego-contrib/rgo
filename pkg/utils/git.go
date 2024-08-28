@@ -5,13 +5,19 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
 func CloneGitRepo(repoURL, branch, path string) error {
+	if strings.HasSuffix(path, "git@") {
+		replacedGitSuffixURL := strings.Replace(strings.ReplaceAll(path, ":", "/"), "git@", "https://", 1)
+		repoURL = replacedGitSuffixURL
+	}
 	_, err := git.PlainClone(path, false, &git.CloneOptions{
 		URL:           repoURL,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
@@ -90,4 +96,27 @@ func GetLatestCommitID(filePath string) (string, error) {
 	}
 
 	return commitObj.Hash.String(), nil
+}
+
+func findSSHPrivateKeyFile() (string, error) {
+	var homeDir string
+	if runtime.GOOS == "windows" {
+		homeDir = os.Getenv("USERPROFILE")
+	} else {
+		homeDir = os.Getenv("HOME")
+	}
+	if homeDir == "" {
+		return "", errors.New("could not find home directory")
+	}
+	sshDir := filepath.Join(homeDir, ".ssh")
+	files, err := os.ReadDir(sshDir)
+	if err != nil {
+		return "", fmt.Errorf("could not read .ssh dir %s: %w", sshDir, err)
+	}
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".pub") {
+			return filepath.Join(sshDir, strings.TrimSuffix(file.Name(), ".pub")), nil
+		}
+	}
+	return "", err
 }
