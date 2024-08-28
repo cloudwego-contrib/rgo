@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	RGOBasePath = "RGO_BASE_PATH"
+	RGOWorkSpaceHome = "RGO_WORKSPACE_HOME"
 )
 
 type (
@@ -64,7 +64,7 @@ func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string
 }
 
 func init() {
-	rgoBasePath = os.Getenv(RGOBasePath)
+	rgoBasePath = os.Getenv(RGOWorkSpaceHome)
 	if rgoBasePath == "" {
 		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
 	}

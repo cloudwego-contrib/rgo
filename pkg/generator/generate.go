@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudwego-contrib/rgo/pkg/global"
-	config2 "github.com/cloudwego-contrib/rgo/pkg/global/config"
+	"github.com/cloudwego-contrib/rgo/pkg/global/config"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	utils2 "github.com/cloudwego-contrib/rgo/pkg/utils"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
@@ -18,12 +18,12 @@ import (
 type RGOGenerator struct {
 	RGOBasePath       string
 	CurWorkPath       string
-	rgoConfig         *config2.RGOConfig
+	rgoConfig         *config.RGOConfig
 	changedRepoCommit map[string]string
 	wg                sync.WaitGroup
 }
 
-func NewRGOGenerator(rgoConfig *config2.RGOConfig, rgoBasePath, curWorkPath string) *RGOGenerator {
+func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath, curWorkPath string) *RGOGenerator {
 	return &RGOGenerator{
 		RGOBasePath:       rgoBasePath,
 		CurWorkPath:       curWorkPath,
@@ -54,7 +54,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 	// create a gopool pool and limit the number of concurrent calls
 	pool, _ := ants.NewPoolWithFunc(10, func(repo interface{}) {
 		defer rg.wg.Done()
-		rg.processRepo(repo.(config2.IDLRepo), changedRepoCommit)
+		rg.processRepo(repo.(config.IDLRepo), changedRepoCommit)
 	})
 	defer pool.Release()
 
@@ -80,11 +80,11 @@ func (rg *RGOGenerator) generateRepoCode() {
 	}
 }
 
-func (rg *RGOGenerator) processRepo(repo config2.IDLRepo, changedRepoCommit map[string]string) {
+func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[string]string) {
 	curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
 	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, repo.RepoName)
 
-	exist, err := utils2.PathExist(filePath)
+	exist, err := utils.PathExist(filePath)
 	if err != nil {
 		global.Logger.Error(fmt.Sprintf("Failed to check if path %s exists: %v", filePath, err))
 		return
@@ -98,7 +98,7 @@ func (rg *RGOGenerator) processRepo(repo config2.IDLRepo, changedRepoCommit map[
 		}
 		changedRepoCommit[repo.RepoName] = commit
 	} else {
-		id, err := utils2.GetLatestCommitID(filePath)
+		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
 			global.Logger.Error(fmt.Sprintf("Failed to get latest commit id for %s: %v", repo, err))
 			return
@@ -120,18 +120,18 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
-		if _, ok := changedRepoCommit[idl.IDLRepo]; !ok {
+		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
 			continue
 		}
 		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.ServiceName)
 
-		commit := changedRepoCommit[idl.IDLRepo]
+		commit := changedRepoCommit[idl.RepoName]
 
 		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
 
 		curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
 
-		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, idl.IDLRepo, idl.IDLPath)
+		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, idl.RepoName, idl.IDLPath)
 
 		err := rg.GenerateRGOCode(rg.CurWorkPath, idl.ServiceName, idlPath, srcPath)
 		if err != nil {
@@ -141,16 +141,16 @@ func (rg *RGOGenerator) generateSrcCode() {
 	}
 }
 
-func (rg *RGOGenerator) cloneRemoteRepo(repo config2.IDLRepo, path string) (string, error) {
+func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path string) (string, error) {
 	var id string
 	var err error
 
-	err = utils2.CloneGitRepo(repo.RepoGit, repo.Branch, path)
+	err = utils.CloneGitRepo(repo.GitUrl, repo.Branch, path)
 	if err != nil {
 		return "", err
 	}
 
-	id, err = utils2.GetLatestCommitID(path)
+	id, err = utils.GetLatestCommitID(path)
 	if err != nil {
 		return "", err
 	}
@@ -158,16 +158,16 @@ func (rg *RGOGenerator) cloneRemoteRepo(repo config2.IDLRepo, path string) (stri
 	return id, rg.updateRGORepoCommit(repo.RepoName, id)
 }
 
-func (rg *RGOGenerator) updateRemoteRepo(repo config2.IDLRepo, path string) (string, error) {
+func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path string) (string, error) {
 	var id string
 	var err error
 
-	err = utils2.UpdateGitRepo(repo.RepoGit, repo.Branch, path)
+	err = utils.UpdateGitRepo(repo.Branch, path)
 	if err != nil {
 		return "", err
 	}
 
-	id, err = utils2.GetLatestCommitID(path)
+	id, err = utils.GetLatestCommitID(path)
 	if err != nil {
 		return "", err
 	}
@@ -183,7 +183,7 @@ func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 	}()
 
 	repos := viper.Get("idl_repos").([]interface{})
-	var res []config2.IDLRepo
+	var res []config.IDLRepo
 
 	for _, repo := range repos {
 		idlRepo := repo.(map[string]interface{})
@@ -192,13 +192,13 @@ func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 			idlRepo["commit"] = newCommit
 		}
 
-		res = append(res, config2.IDLRepo{
+		res = append(res, config.IDLRepo{
 			RepoName: idlRepo["repo_name"].(string),
-			RepoGit:  idlRepo["repo_git"].(string),
+			GitUrl:   idlRepo["git_url"].(string),
 			Branch:   idlRepo["branch"].(string),
 			Commit:   idlRepo["commit"].(string),
 		})
 	}
 
-	return config2.RewriteRGOConfig("idl_repos", res)
+	return config.RewriteRGOConfig("idl_repos", res)
 }

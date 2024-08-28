@@ -37,7 +37,7 @@ func (rg *RGOGenerator) GenerateRGOCode(curWorkPath, serviceName, idlPath, rgoSr
 
 	switch fileType {
 	case ".thrift":
-		err := GenRgoBaseCode(idlPath, rgoSrcPath)
+		err := rg.GenRgoBaseCode(idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}

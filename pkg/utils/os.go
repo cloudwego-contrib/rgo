@@ -3,31 +3,27 @@ package utils
 import (
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
 
 func GetDefaultUserPath() string {
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var userPath string
+	var homeDir string
 	switch runtime.GOOS {
 	case "windows":
-		userPath = filepath.Join("C:\\Users", usr.Username)
+		homeDir = os.Getenv("USERPROFILE")
 	case "darwin":
-		userPath = filepath.Join("/Users", usr.Username)
+		homeDir = os.Getenv("HOME")
 	case "linux":
-		userPath = filepath.Join("/home", usr.Username)
+		homeDir = os.Getenv("HOME")
 	default:
 		log.Fatalf("Unsupported OS: %s", runtime.GOOS)
 	}
-
-	return userPath
+	if homeDir == "" {
+		log.Fatal("Cannot get user home directory")
+	}
+	return homeDir
 }
 
 // PathExist is used to judge whether the path exists in file system.
