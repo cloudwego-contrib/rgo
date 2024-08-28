@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,12 @@ import (
 )
 
 func CloneGitRepo(repoURL, branch, path string) error {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("failed to remove existing directory: %v", err)
+		}
+	}
+
 	_, err := git.PlainClone(path, false, &git.CloneOptions{
 		URL:           repoURL,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
