@@ -10,6 +10,7 @@ const (
 	LogPath       = "log"
 	RepoPath      = "repo"
 	PkgMetaPath   = "pkg_meta"
+	BuildPath     = "build"
 )
 
 const (

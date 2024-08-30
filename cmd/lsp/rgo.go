@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/cloudwego-contrib/rgo/pkg/generator"
 	"github.com/cloudwego-contrib/rgo/pkg/global"
-	config2 "github.com/cloudwego-contrib/rgo/pkg/global/config"
+	"github.com/cloudwego-contrib/rgo/pkg/global/config"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/fsnotify/fsnotify"
@@ -18,7 +18,7 @@ import (
 var (
 	idlConfigPath string
 
-	c *config2.RGOConfig
+	c *config.RGOConfig
 	g *generator.RGOGenerator
 )
 
@@ -39,7 +39,7 @@ func init() {
 
 	global.InitLogger(rgoBasePath, currentPath)
 
-	c, err = config2.ReadConfig(idlConfigPath)
+	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
 		global.Logger.Warn("read rgo_config failed", zap.Error(err))
 	}
@@ -57,9 +57,9 @@ func WatchConfig(g *generator.RGOGenerator) {
 	viper.WatchConfig()
 
 	// hook function for config file change
-	config2.ConfigChangeHandler = func(e fsnotify.Event) {
+	config.ConfigChangeHandler = func(e fsnotify.Event) {
 		viper.Reset()
-		c, err := config2.ReadConfig(idlConfigPath)
+		c, err := config.ReadConfig(idlConfigPath)
 		if err != nil {
 			global.Logger.Error("read rgo_config failed", zap.Error(err))
 		}
@@ -71,7 +71,7 @@ func WatchConfig(g *generator.RGOGenerator) {
 		g.Run()
 	}
 
-	viper.OnConfigChange(config2.ConfigChangeHandler)
+	viper.OnConfigChange(config.ConfigChangeHandler)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

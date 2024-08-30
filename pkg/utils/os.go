@@ -85,3 +85,23 @@ func GetCurrentPathWithUnderline() (string, error) {
 
 	return currentPath, nil
 }
+
+func FindGoModDirectories(root string) ([]string, error) {
+	var goModDirs []string
+
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.Name() == "go.mod" {
+			dir := filepath.Dir(path)
+			goModDirs = append(goModDirs, dir)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return goModDirs, nil
+}

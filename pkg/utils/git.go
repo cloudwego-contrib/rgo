@@ -15,6 +15,11 @@ import (
 )
 
 func CloneGitRepo(repoURL, branch, path string) error {
+	file, err := findSSHPrivateKeyFile()
+	if err != nil {
+		return err
+	}
+
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", file, "")
 	if err != nil {
 		return fmt.Errorf("failed to generate public keys: %v", err)
