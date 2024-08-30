@@ -6,7 +6,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
   const rgoConfig = vscode.workspace.getConfiguration("rgo");
   context.subscriptions.push(
     vscode.commands.registerCommand("rgo.install", async () => downloadRgoBin({
-      installUrl: rgoConfig.get('url'),
+      installCommand: rgoConfig.get('url'),
       progressTitle: "Install Rgo Server",
       statusMessage: "Installing rgo language",
     }))
@@ -18,7 +18,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "rgo.gopackagesdriver",
       async () => downloadRgoBin({
-        installUrl: rgoConfig.get('gopackagesdriver'),
+        installCommand: rgoConfig.get('gopackagesdriver'),
         progressTitle: "Install Rgo Gopackagesdriver",
         statusMessage: "Installing rgo gopackagesdriver",
       })

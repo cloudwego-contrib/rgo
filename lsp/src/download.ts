@@ -4,13 +4,13 @@ import * as fs from "node:fs";
 import * as vscode from "vscode";
 
 export interface downloadGoBin {
-  installUrl: string;
+  installCommand: string;
   progressTitle: string;
   statusMessage: string;
 }
 
 export async function downloadRgoBin({
-  installUrl,
+  installCommand,
   progressTitle,
   statusMessage,
 }: downloadGoBin) {
@@ -23,8 +23,7 @@ export async function downloadRgoBin({
       cancellable: false,
     },
     async (progress) => {
-      const command = `go install ${installUrl}@latest`;
-      terminal.sendText(command);
+      terminal.sendText(installCommand);
 
       // Wait for the command to complete (you can adjust the timeout as needed)
       await new Promise<void>((resolve) => {

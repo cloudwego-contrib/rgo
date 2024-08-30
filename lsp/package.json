@@ -60,12 +60,12 @@
       "title": "Rgo",
       "type": "object",
       "properties": {
-        "rgo.url": {
+        "rgo.lsp": {
           "type": [
             "string",
             "null"
           ],
-          "default": "github.com/cloudwego/hertz/cmd/hz",
+          "default": "go install github.com/cloudwego-contrib/rgo/cmd/lsp@latest",
           "description": "The URL to install the rgo language server"
         },
         "rgo.enable": {
@@ -78,7 +78,7 @@
             "string",
             "null"
           ],
-          "default": "github.com/cloudwego/hertz/cmd/hz",
+          "default": "go install github.com/cloudwego-contrib/rgo/cmd/driver@latest",
           "description": "Enable/disable the rgo language server"
         }
       }
