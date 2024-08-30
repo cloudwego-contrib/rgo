@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,17 +15,12 @@ import (
 )
 
 func CloneGitRepo(repoURL, branch, path string) error {
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		if err := os.RemoveAll(path); err != nil {
-			return fmt.Errorf("failed to remove existing directory: %v", err)
-		}
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", file, "")
+	if err != nil {
+		return fmt.Errorf("failed to generate public keys: %v", err)
 	}
-
-	if strings.HasSuffix(path, "git@") {
-		replacedGitSuffixURL := strings.Replace(strings.ReplaceAll(path, ":", "/"), "git@", "https://", 1)
-		repoURL = replacedGitSuffixURL
-	}
-	_, err := git.PlainClone(path, false, &git.CloneOptions{
+	_, err = git.PlainClone(path, false, &git.CloneOptions{
+		Auth:          publicKeys,
 		URL:           repoURL,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
 		SingleBranch:  true,
