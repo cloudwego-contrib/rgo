@@ -48,8 +48,9 @@
           }
         },
         "required": [
-          "idl_repo",
-          "idl_path"
+          "repo_name",
+          "idl_path",
+          "service_name"
         ]
       }
     }

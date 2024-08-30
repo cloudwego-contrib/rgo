@@ -1,7 +1,6 @@
 import * as path from "path";
 import * as os from "node:os";
 import * as fs from "node:fs";
-import * as util from "node:util";
 import * as vscode from "vscode";
 
 export interface downloadGoBin {
@@ -59,7 +58,7 @@ export async function isGoCommandInstall(installUrl: string): Promise<boolean> {
   const binPath = path.join(
     gopath,
     "bin",
-    os.platform() === "win32" ? `${binName}.exe` : `${binName}`
+    os.platform() === "win32" ? `${binName}.exe` : binName
   );
 
   try {

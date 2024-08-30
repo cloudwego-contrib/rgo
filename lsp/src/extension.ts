@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!rgoConfig.get<boolean>("enable")) return;
 
   // Download rgo language server
-  if (isGoCommandInstall(rgoConfig.get('url'))) {
+  if (!isGoCommandInstall(rgoConfig.get('url'))) {
     try {
       await downloadRgoBin({
         installUrl: rgoConfig.get('url'),

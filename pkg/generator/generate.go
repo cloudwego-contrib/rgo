@@ -44,8 +44,6 @@ func (rg *RGOGenerator) Run() {
 }
 
 func (rg *RGOGenerator) generateRepoCode() {
-	changedRepoCommit := rg.changedRepoCommit
-
 	idlRepos := rg.rgoConfig.IDLRepos
 
 	// create errgroup
@@ -54,7 +52,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 	// create a gopool pool and limit the number of concurrent calls
 	pool, _ := ants.NewPoolWithFunc(10, func(repo interface{}) {
 		defer rg.wg.Done()
-		rg.processRepo(repo.(config.IDLRepo), changedRepoCommit)
+		rg.processRepo(repo.(config.IDLRepo), rg.changedRepoCommit)
 	})
 	defer pool.Release()
 
@@ -104,6 +102,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 			return
 		}
 
+		// cache commit id different from the latest commit id
 		if id != repo.Commit {
 			commit, err := rg.updateRemoteRepo(repo, filePath)
 			if err != nil {
@@ -112,25 +111,25 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 			}
 			changedRepoCommit[repo.RepoName] = commit
 		}
+
+		// when commit id not change, but we cannot find repo in changedRepoCommit, we should add it
+		if _, ok := changedRepoCommit[repo.RepoName]; !ok {
+			changedRepoCommit[repo.RepoName] = repo.Commit
+		}
 	}
 }
 
 func (rg *RGOGenerator) generateSrcCode() {
 	changedRepoCommit := rg.changedRepoCommit
-
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
 		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
 			continue
 		}
 		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.ServiceName)
-
 		commit := changedRepoCommit[idl.RepoName]
-
 		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
-
 		curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
-
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, idl.RepoName, idl.IDLPath)
 
 		err := rg.GenerateRGOCode(rg.CurWorkPath, idl.ServiceName, idlPath, srcPath)
@@ -198,6 +197,7 @@ func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 			Branch:   idlRepo["branch"].(string),
 			Commit:   idlRepo["commit"].(string),
 		})
+		//rg.changedRepoCommit[repoName] = newCommit
 	}
 
 	return config.RewriteRGOConfig("idl_repos", res)
