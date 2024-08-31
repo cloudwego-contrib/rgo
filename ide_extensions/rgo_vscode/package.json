@@ -63,7 +63,7 @@
       {
         "command": "rgo.gopackagesdriver",
         "title": "RGo: Install gopackgesdriver",
-        "description": "Install the gopackgesdriver"
+        "description": "Install the gopackagesdriver"
       }
     ],
     "configuration": {
@@ -78,7 +78,7 @@
           "default": "go install github.com/cloudwego-contrib/rgo/cmd/lsp@428f441583af11a3d79465bc135ed99018ed610f",
           "description": "The URL to install the rgo language server"
         },
-        "rgo.enable": {
+        "rgo.useLanguageServer": {
           "type": "boolean",
           "default": true,
           "description": "Enable/disable the rgo language server"

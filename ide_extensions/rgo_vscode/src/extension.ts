@@ -26,7 +26,7 @@ export async function activate(context: vscode.ExtensionContext) {
   }
   rgoConfig = vscode.workspace.getConfiguration("rgo", uri);
 
-  if (!rgoConfig.get<boolean>("enable")) return;
+  if (!rgoConfig.get<boolean>("useLanguageServer")) return;
 
   // Download rgo language server
   // if (!await isGoCommandInstall(rgoConfig.get('lsp'))) {
