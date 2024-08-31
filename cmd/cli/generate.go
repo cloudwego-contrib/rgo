@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/global"
+	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/global/config"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
-	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 )
@@ -25,9 +24,8 @@ var (
 func InitConfig() {
 	var err error
 
-	rgoBasePath = os.Getenv(consts.RGOBasePath)
-	if rgoBasePath == "" {
-		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
+	if idlConfigPath == "" {
+		idlConfigPath = consts.RGOConfigPath
 	}
 
 	currentPath, err = utils.GetCurrentPathWithUnderline()
@@ -35,11 +33,11 @@ func InitConfig() {
 		panic("get current path failed, err:" + err.Error())
 	}
 
-	currentPath = fmt.Sprintf("rgo_%s", currentPath)
+	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
-		global.Logger.Warn("read rgo_config failed", zap.Error(err))
+		panic("read rgo_config failed:" + err.Error())
 	}
 
 }
@@ -70,22 +68,22 @@ func GenerateRGOCode() error {
 	}
 
 	for _, repo := range c.IDLRepos {
-		buildPath := filepath.Join(rgoBasePath, consts.BuildPath, currentPath, repo.RepoName, repo.Commit)
+		buildPath := filepath.Join(rgoBasePath, consts.BuildPath, repo.RepoName, repo.Commit)
 
 		for k := len(c.IDLs) - 1; k >= 0; k-- {
 			if c.IDLs[k].RepoName == repo.RepoName {
-				idlPath := filepath.Join(rgoBasePath, consts.IDLPath, currentPath, repo.RepoName, c.IDLs[k].IDLPath)
+				idlPath := filepath.Join(rgoBasePath, consts.IDLPath, repo.RepoName, c.IDLs[k].IDLPath)
 
 				path := filepath.Join(buildPath, c.IDLs[k].ServiceName)
 
-				rgoPlugin, err := GetRGOPlugin(path, c.IDLs[k].ServiceName, nil)
+				rgoPlugin, err := plugin2.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, nil)
 				if err != nil {
 					return err
 				}
 
 				err = generateKitexGen(path, filepath.Join("rgo", c.IDLs[k].ServiceName), idlPath, rgoPlugin)
 				if err != nil {
-					global.Logger.Error("Failed to generate rgo code", zap.Error(err))
+					return fmt.Errorf("failed to generate rgo code:%v", err)
 				}
 
 				err = utils.AddModuleToGoWork(path)

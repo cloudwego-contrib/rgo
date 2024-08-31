@@ -17,16 +17,14 @@ import (
 
 type RGOGenerator struct {
 	RGOBasePath       string
-	CurWorkPath       string
 	rgoConfig         *config.RGOConfig
 	changedRepoCommit map[string]string
 	wg                sync.WaitGroup
 }
 
-func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath, curWorkPath string) *RGOGenerator {
+func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	return &RGOGenerator{
 		RGOBasePath:       rgoBasePath,
-		CurWorkPath:       curWorkPath,
 		rgoConfig:         rgoConfig,
 		changedRepoCommit: make(map[string]string),
 	}
@@ -81,8 +79,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 }
 
 func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[string]string) {
-	curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
-	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, repo.RepoName)
+	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, repo.RepoName)
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
@@ -90,8 +87,8 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 		return
 	}
 
-	if !exist || repo.Commit == "" {
-		commit, err := rg.cloneRemoteRepo(repo, filePath)
+	if !exist {
+		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
 			global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 			return
@@ -105,7 +102,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 		}
 
 		if id != repo.Commit {
-			commit, err := rg.updateRemoteRepo(repo, filePath)
+			commit, err := rg.updateRemoteRepo(repo, filePath, repo.Commit)
 			if err != nil {
 				global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 				return
@@ -129,11 +126,9 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
 
-		curWorkPath := fmt.Sprintf("rgo_%s", rg.CurWorkPath)
+		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
-		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, curWorkPath, idl.RepoName, idl.IDLPath)
-
-		err := rg.GenerateRGOCode(rg.CurWorkPath, idl.ServiceName, idlPath, srcPath)
+		err := rg.GenerateRGOCode(idl.ServiceName, idlPath, srcPath)
 		if err != nil {
 			global.Logger.Error(fmt.Sprintf("Failed to generate rgo code for %s: %v", idl.ServiceName, err))
 		}
@@ -141,11 +136,11 @@ func (rg *RGOGenerator) generateSrcCode() {
 	}
 }
 
-func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path string) (string, error) {
+func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path, commit string) (string, error) {
 	var id string
 	var err error
 
-	err = utils.CloneGitRepo(repo.GitUrl, repo.Branch, path)
+	err = utils.CloneGitRepo(repo.GitUrl, repo.Branch, path, commit)
 	if err != nil {
 		return "", err
 	}
@@ -158,11 +153,11 @@ func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path string) (strin
 	return id, rg.updateRGORepoCommit(repo.RepoName, id)
 }
 
-func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path string) (string, error) {
+func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit string) (string, error) {
 	var id string
 	var err error
 
-	err = utils.UpdateGitRepo(repo.Branch, path)
+	err = utils.UpdateGitRepo(repo.Branch, path, commit)
 	if err != nil {
 		return "", err
 	}

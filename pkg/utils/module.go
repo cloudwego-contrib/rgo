@@ -61,7 +61,7 @@ func AddModuleToGoWork(modules ...string) error {
 		return fmt.Errorf("Error adding module(s) to Go workspace: %v", err)
 	}
 
-	return nil
+	return RunGoWorkSync()
 }
 
 func RemoveModulesFromGoWork(workFilePath string, modulesToRemove []string) error {
@@ -110,5 +110,36 @@ func RemoveModulesFromGoWork(workFilePath string, modulesToRemove []string) erro
 		}
 	}
 
+	return RunGoWorkSync()
+}
+
+func RunGoWorkSync() error {
+	cmd := exec.Command("go", "work", "sync")
+
+	// Run the command and capture output or error
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute 'go work sync': %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func RunGoModTidyInDir(dir string) error {
+	cmd := exec.Command("go", "mod", "tidy")
+
+	if dir == "" {
+		dir = "."
+	}
+
+	cmd.Dir = dir
+
+	// Run the command and capture output or error
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute 'go mod tidy' in directory %s: %v, output: %s", dir, err, string(output))
+	}
+
+	fmt.Println("go mod tidy executed successfully in directory:", dir)
 	return nil
 }

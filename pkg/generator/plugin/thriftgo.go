@@ -1,8 +1,7 @@
-package main
+package plugin
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/generator"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -12,12 +11,8 @@ import (
 	"path/filepath"
 )
 
-func strToPointer(str string) *string {
-	return &str
-}
-
-func GetRGOPlugin(pwd, serviceName string, Args []string) (*RGOPlugin, error) {
-	rgoPlugin := &RGOPlugin{}
+func GetRGOThriftgoPlugin(pwd, serviceName string, Args []string) (*RGOThriftgoPlugin, error) {
+	rgoPlugin := &RGOThriftgoPlugin{}
 
 	rgoPlugin.Pwd = pwd
 	rgoPlugin.ServiceName = serviceName
@@ -26,21 +21,21 @@ func GetRGOPlugin(pwd, serviceName string, Args []string) (*RGOPlugin, error) {
 	return rgoPlugin, nil
 }
 
-type RGOPlugin struct {
+type RGOThriftgoPlugin struct {
 	Args        []string
 	ServiceName string
 	Pwd         string
 }
 
-func (r *RGOPlugin) GetName() string {
+func (r *RGOThriftgoPlugin) GetName() string {
 	return "rgo"
 }
 
-func (r *RGOPlugin) GetPluginParameters() []string {
+func (r *RGOThriftgoPlugin) GetPluginParameters() []string {
 	return r.Args
 }
 
-func (r *RGOPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
+func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	// Mock data
 	serviceName := r.ServiceName
 
@@ -49,7 +44,7 @@ func (r *RGOPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	fset := token.NewFileSet()
 
 	// Call the function
-	file, err := generator.BuildRGOGenThriftAstFile(serviceName, thrift)
+	file, err := BuildRGOThriftAstFile(serviceName, thrift)
 
 	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
 	if err != nil {
@@ -85,6 +80,13 @@ func (r *RGOPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	if err = format.Node(outputFile, fset, file); err != nil {
 		return &plugin.Response{
 			Error: strToPointer(fmt.Sprintf("failed to format file: %v", err)),
+		}
+	}
+
+	err = utils.RunGoModTidyInDir(r.Pwd)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to go mod tidy: %v", err)),
 		}
 	}
 

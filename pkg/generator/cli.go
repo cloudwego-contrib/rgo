@@ -3,16 +3,16 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"go/format"
 	"go/token"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func (rg *RGOGenerator) GenerateRGOCode(curWorkPath, serviceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenerateRGOCode(serviceName, idlPath, rgoSrcPath string) error {
 	exist, err := utils.FileExistsInPath(rgoSrcPath, "go.mod")
 	if err != nil {
 		return err
@@ -34,17 +34,12 @@ func (rg *RGOGenerator) GenerateRGOCode(curWorkPath, serviceName, idlPath, rgoSr
 
 	switch fileType {
 	case ".thrift":
-		err := rg.GenRgoBaseCode(idlPath, rgoSrcPath)
+		err = rg.GenRgoBaseCode(serviceName, idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
 
-		err = rg.GenRgoClientCode(serviceName, idlPath, rgoSrcPath)
-		if err != nil {
-			return err
-		}
-
-		return rg.generateRGOPackages(curWorkPath, serviceName, rgoSrcPath)
+		return rg.generateRGOPackages(serviceName, rgoSrcPath)
 	case ".proto":
 		return nil
 	default:
@@ -60,7 +55,7 @@ func (rg *RGOGenerator) GenRgoClientCode(serviceName, idlPath, rgoSrcPath string
 
 	fset := token.NewFileSet()
 
-	f, err := BuildRGOThriftAstFile(serviceName, thriftFile)
+	f, err := plugin.BuildRGOThriftAstFile(serviceName, thriftFile)
 	if err != nil {
 		return err
 	}
@@ -78,12 +73,4 @@ func (rg *RGOGenerator) GenRgoClientCode(serviceName, idlPath, rgoSrcPath string
 	}
 
 	return nil
-}
-
-func extractPathAfterCache(fullPath string) string {
-	index := strings.Index(fullPath, "cache/")
-	if index == -1 {
-		return ""
-	}
-	return fullPath[index:]
 }

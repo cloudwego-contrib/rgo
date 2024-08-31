@@ -27,24 +27,21 @@ func init() {
 
 	var err error
 
-	rgoBasePath := os.Getenv(consts.RGOBasePath)
-	if rgoBasePath == "" {
-		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
-	}
-
 	currentPath, err := utils.GetCurrentPathWithUnderline()
 	if err != nil {
 		panic("get current path failed, err:" + err.Error())
 	}
 
-	global.InitLogger(rgoBasePath, currentPath)
+	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
+
+	global.InitLogger(rgoBasePath)
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
 		global.Logger.Warn("read rgo_config failed", zap.Error(err))
 	}
 
-	g = generator.NewRGOGenerator(c, rgoBasePath, currentPath)
+	g = generator.NewRGOGenerator(c, rgoBasePath)
 }
 
 func RGORun() {
@@ -66,7 +63,7 @@ func WatchConfig(g *generator.RGOGenerator) {
 
 		global.Logger.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
 
-		g := generator.NewRGOGenerator(c, g.RGOBasePath, g.CurWorkPath)
+		g := generator.NewRGOGenerator(c, g.RGOBasePath)
 
 		g.Run()
 	}

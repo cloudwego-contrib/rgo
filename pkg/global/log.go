@@ -12,9 +12,9 @@ import (
 
 var Logger *zap.Logger
 
-func InitLogger(rgoBasePath, curWorkPath string) {
+func InitLogger(rgoBasePath string) {
 	currentTime := time.Now().Format("2006-01-02")
-	logFileName := filepath.Join(rgoBasePath, consts.LogPath, fmt.Sprintf("rgo_%s", curWorkPath), fmt.Sprintf("%s.log", currentTime))
+	logFileName := filepath.Join(rgoBasePath, consts.LogPath, fmt.Sprintf("%s.log", currentTime))
 
 	lumberjackLogger := &lumberjack.Logger{
 		Filename:   logFileName,

@@ -24,7 +24,7 @@ cd driver
 
 go mod tidy
 
-go build -o driver .
+go build -o rgo_packages_driver .
 ```
 
 ## 在 VS-Code 中调试运行插件
@@ -54,7 +54,7 @@ go mod init rgo_test
 
 将刚刚编译的 driver 文件移至根目录
 ```shell
-mv ~/rgo/driver ~/rgo_test/
+mv ~/rgo/rgo_packages_driver ~/rgo_test/
 ```
 
 ## 在根目录下新建配置文件 rgo_config.yaml
@@ -64,15 +64,13 @@ idl_repos:
     - repo_name: repo_name1
       repo_git: git@github.com:ViolaPioggia/IDL_REPO.git
       branch: main
-      commit: # commit id 非必填
+      commit: # commit 非必填
 idls:
     - idl_path: ./echo.thrift
       idl_repo: repo_name1
-      service_address: service-one.example.com
       service_name: service_one
     - idl_path: ./hello.thrift
       idl_repo: repo_name1
-      service_address: service-two.example.com
       service_name: service_two
 
 ```
@@ -88,7 +86,7 @@ vim .vscode/settings.json
 ```json
 {
   "go.toolsEnvVars": {
-    "GOPACKAGESDRIVER":"${workspaceFolder}/driver"
+    "GOPACKAGESDRIVER":"${workspaceFolder}/rgo_packages_driver"
   },
   "go.enableCodeLens": {
     "runtest": false
@@ -121,8 +119,8 @@ vim .vscode/settings.json
 
 # Tips:
 
-1. 因为官方 golsp 存在解析缓存问题，所以在 RGO 代码变更后目前无法第一时间获取变更依赖。
+1. 因为官方 gopls 存在解析缓存问题，所以在 RGO 代码变更后目前无法第一时间获取变更依赖。
 
-暂时的解决方案是用户自行通过 command + shift + p 重启 golsp 刷新依赖或者 command + 鼠标左键进入 RGO 的代码强制刷新。
+暂时的解决方案是用户自行通过 command + shift + p 重启 gopls 刷新依赖或者 command + 鼠标左键进入 RGO 的代码强制刷新。
 
-![restart_golsp.png](doc/restart_golsp.png)
+![restart_gopls.png](doc/restart_gopls.png)

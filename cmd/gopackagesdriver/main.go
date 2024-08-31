@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/rgo/driver/internal/utils"
+	"github.com/cloudwego-contrib/rgo/driver/internal"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"golang.org/x/tools/go/packages"
 	"io"
 	"log"
@@ -13,10 +15,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-)
-
-const (
-	RGOWorkSpaceHome = "RGO_WORKSPACE_HOME"
 )
 
 type (
@@ -64,11 +62,12 @@ func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string
 }
 
 func init() {
-	rgoBasePath = os.Getenv(RGOWorkSpaceHome)
-	if rgoBasePath == "" {
-		rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), ".RGO", "cache")
+	curWorkPath, err := utils.GetCurrentPathWithUnderline()
+	if err != nil {
+		panic(err)
 	}
 
+	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, curWorkPath)
 }
 
 func main() {
@@ -111,7 +110,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		BuildFlags: req.BuildFlags,
 	}
 
-	ret, b, err := utils.UnsafeGetDefaultDriverResponse(cfg, args...)
+	ret, b, err := internal.UnsafeGetDefaultDriverResponse(cfg, args...)
 	if err != nil || b {
 		return fmt.Errorf("failed to get default driver response: %v", err)
 	}
@@ -122,11 +121,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 		}
 	}
 
-	basePath := filepath.Join(rgoBasePath, "pkg_meta")
-
-	curWorkPath, err := utils.GetCurrentPathWithUnderline()
-
-	targetPath := filepath.Join(basePath, curWorkPath)
+	targetPath := filepath.Join(rgoBasePath, "pkg_meta")
 
 	targetPkgs, err = getTargetPackages(targetPath)
 	if err != nil {

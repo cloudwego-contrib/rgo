@@ -5,6 +5,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
+	"strings"
 )
 
 func ReadConfig(path string) (*RGOConfig, error) {
@@ -18,6 +19,11 @@ func ReadConfig(path string) (*RGOConfig, error) {
 	c := &RGOConfig{}
 	if err := viper.Unmarshal(&c); err != nil {
 		log.Fatalf("Failed to parse config into struct: %v", err)
+	}
+
+	for i := range c.IDLs {
+		strings.ReplaceAll(c.IDLs[i].ServiceName, "-", "_")
+		strings.ReplaceAll(c.IDLs[i].ServiceName, ".", "_")
 	}
 
 	return c, nil

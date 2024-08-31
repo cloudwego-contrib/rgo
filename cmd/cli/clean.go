@@ -27,7 +27,7 @@ func Clean() error {
 	removeModulePaths := make([]string, 0)
 
 	for _, repo := range c.IDLRepos {
-		buildPath := filepath.Join(rgoBasePath, consts.BuildPath, currentPath, repo.RepoName, repo.Commit)
+		buildPath := filepath.Join(rgoBasePath, consts.BuildPath, repo.RepoName, repo.Commit)
 
 		for k := len(c.IDLs) - 1; k >= 0; k-- {
 			if c.IDLs[k].RepoName == repo.RepoName {
