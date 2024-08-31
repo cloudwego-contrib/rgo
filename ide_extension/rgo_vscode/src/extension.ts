@@ -43,19 +43,19 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   }
 
-  if (!await isGoCommandInstall(rgoConfig.get('gopackagesdriver'))) {
-    try {
-      await downloadRgoBin({
-        installCommand: rgoConfig.get('gopackagesdriver'),
-        progressTitle: "Install Rgo Gopackagesdriver",
-        statusMessage: "Installing rgo gopackagesdriver...",
-      });
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        "Error downloading rgo gopackagesdriver: " + error.message
-      );
-    }
-  }
+  // if (!await isGoCommandInstall(rgoConfig.get('gopackagesdriver'))) {
+  //   try {
+  //     await downloadRgoBin({
+  //       installCommand: rgoConfig.get('gopackagesdriver'),
+  //       progressTitle: "Install Rgo Gopackagesdriver",
+  //       statusMessage: "Installing rgo gopackagesdriver...",
+  //     });
+  //   } catch (error) {
+  //     vscode.window.showErrorMessage(
+  //       "Error downloading rgo gopackagesdriver: " + error.message
+  //     );
+  //   }
+  // }
 
   await startRgoLspServer();
 }
