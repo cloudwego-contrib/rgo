@@ -117,6 +117,25 @@ vim .vscode/settings.json
 ## 效果展示
 ![show.png](doc/show.png)
 
+# vscode 插件
+
+## 支持功能
+- [x] rgo_config.yml 配置文件解析智能提示
+- [x] 自动预下载 `rgo_lsp_server` && `rgopackagesdriver` 
+- [x] 支持**消费**配置中的 idls, 做到无侵入的代码提示
+
+## 支持 vscode 配置
+
+- `rgo.useLanguageServer`, 默认为 `true`, 用于控制是否开启 rgo language server，关闭后将不会有任何提示
+- `rgo.languageServerInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgo_lsp_server@latest`, 用于配置 rgo_lsp_server 的安装命令
+- `rgo.gopackagesdriverInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgopackagesdriver@latest`, 用于配置 rgopackagesdriver 的安装命令
+
+## 支持的 vscode 命令
+
+- `RGo: Install language server`, 用于安装 rgo_lsp_server
+- `RGo: Install gopackagesdriver`, 用于安装 rgopackagesdriver
+- `RGo: Restart language server`, 用于重启 rgo_lsp_server
+
 # Tips:
 
 1. 因为官方 gopls 存在解析缓存问题，所以在 RGO 代码变更后目前无法第一时间获取变更依赖。
