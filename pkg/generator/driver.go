@@ -13,7 +13,7 @@ type RGOPackages struct {
 	Packages []packages.Package `json:"packages"`
 }
 
-func (rg *RGOGenerator) generateRGOPackages(serviceName, path string) error {
+func (rg *RGOGenerator) generateRGOPackages(formatServiceName, path string) error {
 	cfg := &packages.Config{
 		Mode: packages.NeedName |
 			packages.NeedFiles |
@@ -40,7 +40,7 @@ func (rg *RGOGenerator) generateRGOPackages(serviceName, path string) error {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
 
-	outputFile := filepath.Join(rg.RGOBasePath, consts.PkgMetaPath, serviceName, "rgo_packages.json")
+	outputFile := filepath.Join(rg.RGOBasePath, consts.PkgMetaPath, formatServiceName, "rgo_packages.json")
 
 	err = os.MkdirAll(filepath.Dir(outputFile), 0755)
 	if err != nil {

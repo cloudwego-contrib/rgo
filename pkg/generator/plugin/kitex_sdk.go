@@ -15,20 +15,22 @@ func strToPointer(str string) *string {
 	return &str
 }
 
-func GetRGOKitexPlugin(pwd, serviceName string, Args []string) (*RGOKitexPlugin, error) {
+func GetRGOKitexPlugin(pwd, serviceName, formatServiceName string, Args []string) (*RGOKitexPlugin, error) {
 	rgoPlugin := &RGOKitexPlugin{}
 
 	rgoPlugin.Pwd = pwd
 	rgoPlugin.ServiceName = serviceName
+	rgoPlugin.FormatServiceName = formatServiceName
 	rgoPlugin.Args = Args
 
 	return rgoPlugin, nil
 }
 
 type RGOKitexPlugin struct {
-	Args        []string
-	ServiceName string
-	Pwd         string
+	Args              []string
+	ServiceName       string
+	FormatServiceName string
+	Pwd               string
 }
 
 func (r *RGOKitexPlugin) GetName() string {
@@ -40,15 +42,12 @@ func (r *RGOKitexPlugin) GetPluginParameters() []string {
 }
 
 func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
-	// Mock data
-	serviceName := r.ServiceName
-
 	thrift := req.AST
 
 	fset := token.NewFileSet()
 
 	// Call the function
-	file, err := BuildRGOGenThriftAstFile(serviceName, thrift)
+	file, err := BuildRGOGenThriftAstFile(r.ServiceName, r.FormatServiceName, thrift)
 
 	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
 	if err != nil {
@@ -65,7 +64,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, serviceName), r.Pwd)
+		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, r.FormatServiceName), r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),

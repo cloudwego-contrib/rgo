@@ -120,7 +120,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
 			continue
 		}
-		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.ServiceName)
+		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
 
 		commit := changedRepoCommit[idl.RepoName]
 
@@ -128,7 +128,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
-		err := rg.GenerateRGOCode(idl.ServiceName, idlPath, srcPath)
+		err := rg.GenerateRGOCode(idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
 			global.Logger.Error(fmt.Sprintf("Failed to generate rgo code for %s: %v", idl.ServiceName, err))
 		}

@@ -15,15 +15,16 @@ func ReadConfig(path string) (*RGOConfig, error) {
 		log.Fatalf("Failed to read config file %s: %v", path, err)
 	}
 
-	// 解析配置文件内容到结构体
+	// Read Config
 	c := &RGOConfig{}
 	if err := viper.Unmarshal(&c); err != nil {
 		log.Fatalf("Failed to parse config into struct: %v", err)
 	}
 
+	//TODO:找代码时机替换
 	for i := range c.IDLs {
-		strings.ReplaceAll(c.IDLs[i].ServiceName, "-", "_")
-		strings.ReplaceAll(c.IDLs[i].ServiceName, ".", "_")
+		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].ServiceName, "-", "_")
+		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].FormatServiceName, ".", "_")
 	}
 
 	return c, nil

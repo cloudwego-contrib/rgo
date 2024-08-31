@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 )
 
-func (rg *RGOGenerator) GenerateRGOCode(serviceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath string) error {
 	exist, err := utils.FileExistsInPath(rgoSrcPath, "go.mod")
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func (rg *RGOGenerator) GenerateRGOCode(serviceName, idlPath, rgoSrcPath string)
 			return fmt.Errorf("failed to create directory: %v", err)
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, serviceName), rgoSrcPath)
+		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, formatServiceName), rgoSrcPath)
 		if err != nil {
 			return err
 		}
@@ -34,12 +34,12 @@ func (rg *RGOGenerator) GenerateRGOCode(serviceName, idlPath, rgoSrcPath string)
 
 	switch fileType {
 	case ".thrift":
-		err = rg.GenRgoBaseCode(serviceName, idlPath, rgoSrcPath)
+		err = rg.GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
 
-		return rg.generateRGOPackages(serviceName, rgoSrcPath)
+		return rg.generateRGOPackages(formatServiceName, rgoSrcPath)
 	case ".proto":
 		return nil
 	default:

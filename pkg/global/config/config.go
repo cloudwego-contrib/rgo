@@ -8,9 +8,10 @@ type IDLRepo struct {
 }
 
 type IDL struct {
-	ServiceName string `yaml:"service_name" mapstructure:"service_name"`
-	IDLPath     string `yaml:"idl_path" mapstructure:"idl_path"`
-	RepoName    string `yaml:"repo_name" mapstructure:"repo_name"`
+	ServiceName       string `yaml:"service_name" mapstructure:"service_name"`
+	FormatServiceName string
+	IDLPath           string `yaml:"idl_path" mapstructure:"idl_path"`
+	RepoName          string `yaml:"repo_name" mapstructure:"repo_name"`
 }
 
 type RGOConfig struct {

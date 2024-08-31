@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/TobiasYin/go-lsp v0.0.0-20231106040121-c84e66f01aa4
-	github.com/bytedance/sonic v1.12.1
+	github.com/bytedance/sonic v1.12.2
 	github.com/cloudwego/kitex v0.10.3
 	github.com/cloudwego/thriftgo v0.3.15
 	github.com/fsnotify/fsnotify v1.7.0

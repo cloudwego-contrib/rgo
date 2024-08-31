@@ -11,20 +11,20 @@ import (
 	"path/filepath"
 )
 
-func GetRGOThriftgoPlugin(pwd, serviceName string, Args []string) (*RGOThriftgoPlugin, error) {
+func GetRGOThriftgoPlugin(pwd, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
 	rgoPlugin := &RGOThriftgoPlugin{}
 
 	rgoPlugin.Pwd = pwd
-	rgoPlugin.ServiceName = serviceName
+	rgoPlugin.FormatServiceName = formatServiceName
 	rgoPlugin.Args = Args
 
 	return rgoPlugin, nil
 }
 
 type RGOThriftgoPlugin struct {
-	Args        []string
-	ServiceName string
-	Pwd         string
+	Args              []string
+	FormatServiceName string
+	Pwd               string
 }
 
 func (r *RGOThriftgoPlugin) GetName() string {
@@ -36,15 +36,14 @@ func (r *RGOThriftgoPlugin) GetPluginParameters() []string {
 }
 
 func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
-	// Mock data
-	serviceName := r.ServiceName
+	formatServiceName := r.FormatServiceName
 
 	thrift := req.AST
 
 	fset := token.NewFileSet()
 
 	// Call the function
-	file, err := BuildRGOThriftAstFile(serviceName, thrift)
+	file, err := BuildRGOThriftAstFile(formatServiceName, thrift)
 
 	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
 	if err != nil {
@@ -61,7 +60,7 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, serviceName), r.Pwd)
+		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, formatServiceName), r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),

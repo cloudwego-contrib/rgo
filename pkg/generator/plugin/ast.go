@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func BuildRGOThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File, error) {
+func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*ast.File, error) {
 	var namespace string
 
 	for _, v := range thrift.Namespaces {
@@ -25,7 +25,7 @@ func BuildRGOThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File
 	}
 
 	f := &ast.File{
-		Name: ast.NewIdent(serviceName),
+		Name: ast.NewIdent(formatServiceName),
 	}
 
 	f.Decls = append([]ast.Decl{
@@ -42,7 +42,7 @@ func BuildRGOThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File
 					Path: &ast.BasicLit{Kind: token.STRING, Value: `"github.com/cloudwego/kitex/client/callopt"`},
 				},
 				&ast.ImportSpec{
-					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, serviceName, "kitex_gen", namespace))},
+					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, formatServiceName, "kitex_gen", namespace))},
 				},
 			},
 		},
@@ -236,7 +236,7 @@ func BuildRGOThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File
 	return f, nil
 }
 
-func BuildRGOGenThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.File, error) {
+func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *parser.Thrift) (*ast.File, error) {
 	var namespace string
 
 	for _, v := range thrift.Namespaces {
@@ -252,7 +252,7 @@ func BuildRGOGenThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.F
 	name := strings.ToLower(thrift.Services[0].Name)
 
 	f := &ast.File{
-		Name: ast.NewIdent(serviceName),
+		Name: ast.NewIdent(formatServiceName),
 	}
 
 	f.Decls = append([]ast.Decl{
@@ -269,10 +269,10 @@ func BuildRGOGenThriftAstFile(serviceName string, thrift *parser.Thrift) (*ast.F
 					Path: &ast.BasicLit{Kind: token.STRING, Value: `"github.com/cloudwego/kitex/client/callopt"`},
 				},
 				&ast.ImportSpec{
-					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, serviceName, "kitex_gen", namespace))},
+					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, formatServiceName, "kitex_gen", namespace))},
 				},
 				&ast.ImportSpec{
-					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, serviceName, "kitex_gen", namespace, name))},
+					Path: &ast.BasicLit{Kind: token.STRING, Value: fmt.Sprintf(`"%s"`, filepath.Join(consts.RGOModuleName, formatServiceName, "kitex_gen", namespace, name))},
 				},
 			},
 		},

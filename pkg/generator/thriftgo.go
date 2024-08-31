@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-func (rg *RGOGenerator) GenRgoBaseCode(serviceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath string) error {
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	args := []string{
@@ -21,7 +21,7 @@ func (rg *RGOGenerator) GenRgoBaseCode(serviceName, idlPath, rgoSrcPath string) 
 		idlPath,
 	}
 
-	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, serviceName, nil)
+	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, formatServiceName, nil)
 	if err != nil {
 		return err
 	}
