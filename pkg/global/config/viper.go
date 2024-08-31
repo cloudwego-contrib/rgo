@@ -21,7 +21,6 @@ func ReadConfig(path string) (*RGOConfig, error) {
 		log.Fatalf("Failed to parse config into struct: %v", err)
 	}
 
-	//TODO:找代码时机替换
 	for i := range c.IDLs {
 		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].ServiceName, "-", "_")
 		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].FormatServiceName, ".", "_")
