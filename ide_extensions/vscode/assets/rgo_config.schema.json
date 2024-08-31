@@ -21,13 +21,15 @@
             "description": "The branch of the repository"
           },
           "commit": {
-            "type": "string"
+            "type": "string",
+            "description": "The commit-id of the repository. You need not to fill this field if you want to use the latest commit"
           }
         },
         "required": [
           "repo_name",
           "git_url",
-          "branch"
+          "branch",
+          "commit"
         ]
       }
     },
