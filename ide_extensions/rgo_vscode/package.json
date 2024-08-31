@@ -70,7 +70,7 @@
       "title": "Rgo",
       "type": "object",
       "properties": {
-        "rgo.lsp": {
+        "rgo.languageServerInstall": {
           "type": [
             "string",
             "null"
@@ -83,7 +83,7 @@
           "default": true,
           "description": "Enable/disable the rgo language server"
         },
-        "rgo.gopackagesdriver": {
+        "rgo.gopackagesdriverInstall": {
           "type": [
             "string",
             "null"

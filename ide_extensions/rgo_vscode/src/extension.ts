@@ -29,10 +29,10 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!rgoConfig.get<boolean>("useLanguageServer")) return;
 
   // Download rgo language server
-  // if (!await isGoCommandInstall(rgoConfig.get('lsp'))) {
+  // if (!await isGoCommandInstall(rgoConfig.get('languageServerInstall'))) {
   //   try {
   //     await downloadRgoBin({
-  //       installCommand: rgoConfig.get('lsp'),
+  //       installCommand: rgoConfig.get('languageServerInstall'),
   //       progressTitle: "Install Rgo Server",
   //       statusMessage: "Installing rgo language server...",
   //     });
@@ -43,10 +43,10 @@ export async function activate(context: vscode.ExtensionContext) {
   //   }
   // }
 
-  // if (!await isGoCommandInstall(rgoConfig.get('gopackagesdriver'))) {
+  // if (!await isGoCommandInstall(rgoConfig.get('gopackagesdriverInstall'))) {
   //   try {
   //     await downloadRgoBin({
-  //       installCommand: rgoConfig.get('gopackagesdriver'),
+  //       installCommand: rgoConfig.get('gopackagesdriverInstall'),
   //       progressTitle: "Install Rgo Gopackagesdriver",
   //       statusMessage: "Installing rgo gopackagesdriver...",
   //     });
