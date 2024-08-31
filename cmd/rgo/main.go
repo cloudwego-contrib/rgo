@@ -57,7 +57,6 @@ func Init() *cli.App {
 				&cli.StringFlag{Name: "config,c", Usage: "rgo_config file path", Destination: &idlConfigPath, DefaultText: consts.RGOConfigPath},
 			},
 			Action: func(c *cli.Context) error {
-
 				return GenerateRGOCode()
 			},
 		},
@@ -66,9 +65,17 @@ func Init() *cli.App {
 			Usage: CleanUsage,
 			Flags: nil,
 			Action: func(c *cli.Context) error {
-
 				return Clean()
 			},
+		},
+		{
+			Name:  InitName,
+			Usage: InitUsage,
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "mod", Usage: "project init mod", Required: true},
+				&cli.StringFlag{Name: "type", Usage: "ide type, default: vscode", DefaultText: ""},
+			},
+			Action: InitProject,
 		},
 	}
 	return app
@@ -91,5 +98,11 @@ Examples:
 Examples:
   # Clean rgo code 
   rgo clean
+`
+	InitName  = "init"
+	InitUsage = `init rgo project
+Examples:
+	# Init rgo project
+	rgo init --mod=github.com/cloudwego/rgo
 `
 )
