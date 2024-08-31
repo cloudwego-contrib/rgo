@@ -127,8 +127,8 @@ vim .vscode/settings.json
 ## 支持 vscode 配置
 
 - `rgo.useLanguageServer`, 默认为 `true`, 用于控制是否开启 rgo language server，关闭后将不会有任何提示
-- `rgo.lsp`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgo_lsp_server@latest`, 用于配置 rgo_lsp_server 的安装命令
-- `rgo.gopackagesdriver`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgopackagesdriver@latest`, 用于配置 rgopackagesdriver 的安装命令
+- `rgo.languageServerInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgo_lsp_server@latest`, 用于配置 rgo_lsp_server 的安装命令
+- `rgo.gopackagesdriverInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgopackagesdriver@latest`, 用于配置 rgopackagesdriver 的安装命令
 
 ## 支持的 vscode 命令
 
