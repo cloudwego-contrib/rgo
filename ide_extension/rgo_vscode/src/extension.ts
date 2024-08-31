@@ -1,51 +1,94 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
+import * as path from "path";
+import * as vscode from "vscode";
 import {
-	LanguageClient,
-	LanguageClientOptions,
-	ServerOptions,
-} from 'vscode-languageclient/node';
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
+
+import {
+  downloadRgoBin,
+  isGoCommandInstall
+} from "./download";
+import { registerCommands } from "./command";
 
 let client: LanguageClient;
+let rgoConfig: vscode.WorkspaceConfiguration = null;
 
-export function activate(context: vscode.ExtensionContext) {
-	// The server is implemented in Go
-	const serverModule = context.asAbsolutePath(
-		path.join('bin', 'go-lsp')
-	);
+export async function activate(context: vscode.ExtensionContext) {
+  registerCommands(context)
 
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	const serverOptions: ServerOptions = {
-		run: { command: path.join(__dirname,'../bin', 'go-lsp') },
-		debug: { command: path.join(__dirname,'../bin', 'go-lsp') }
-	};
+  let uri;
+  if (vscode.window.activeTextEditor) {
+    uri = vscode.window.activeTextEditor.document.uri;
+  } else {
+    uri = null;
+  }
+  rgoConfig = vscode.workspace.getConfiguration("rgo", uri);
 
-	// Options to control the language client
-	const clientOptions: LanguageClientOptions = {
-		// Register the server for Go files
-		documentSelector: [{ scheme: 'file', language: 'go' }],
-		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
-			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
-		}
-	};
+  if (!rgoConfig.get<boolean>("enable")) return;
 
-	// Create the language client and start the client.
-	client = new LanguageClient(
-		'languageServerExample',
-		'Language Server Example',
-		serverOptions,
-		clientOptions
-	);
+  // Download rgo language server
+  if (!await isGoCommandInstall(rgoConfig.get('lsp'))) {
+    try {
+      await downloadRgoBin({
+        installCommand: rgoConfig.get('lsp'),
+        progressTitle: "Install Rgo Server",
+        statusMessage: "Installing rgo language server...",
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        "Error downloading rgo language server: " + error.message
+      );
+    }
+  }
 
-	// Start the client. This will also launch the server
-	client.start();
+  if (!await isGoCommandInstall(rgoConfig.get('gopackagesdriver'))) {
+    try {
+      await downloadRgoBin({
+        installCommand: rgoConfig.get('gopackagesdriver'),
+        progressTitle: "Install Rgo Gopackagesdriver",
+        statusMessage: "Installing rgo gopackagesdriver...",
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        "Error downloading rgo gopackagesdriver: " + error.message
+      );
+    }
+  }
+
+  await startRgoLspServer();
+}
+
+export async function startRgoLspServer() {
+  const serverOptions: ServerOptions = {
+    run: { command: path.join(__dirname, "../bin", "go-lsp") },
+    debug: { command: path.join(__dirname, "../bin", "go-lsp") },
+  };
+
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [{ scheme: "file", language: "go" }],
+    synchronize: {
+      fileEvents: vscode.workspace.createFileSystemWatcher("**/.clientrc"),
+    },
+  };
+
+  client = new LanguageClient(
+    "rgoLanguageServer",
+    "Rgo Language Server",
+    serverOptions,
+    clientOptions
+  );
+
+  await client.start().then(() => {
+    vscode.window.showInformationMessage("Rgo Language Server started");
+  });
 }
 
 export function deactivate(): Thenable<void> | undefined {
-	if (!client) {
-		return undefined;
-	}
-	return client.stop();
+  if (!client) {
+    return undefined;
+  }
+  return client.stop();
 }
+
