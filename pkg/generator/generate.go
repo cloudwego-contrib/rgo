@@ -109,6 +109,11 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 			}
 			changedRepoCommit[repo.RepoName] = commit
 		}
+
+		// if commit id is the same,we should check if repo commit id in changedRepoCommit
+		if _, ok := changedRepoCommit[repo.RepoName]; !ok {
+			changedRepoCommit[repo.RepoName] = repo.Commit
+		}
 	}
 }
 
