@@ -17,10 +17,11 @@
 package main
 
 import (
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
+
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {

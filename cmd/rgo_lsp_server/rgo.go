@@ -18,6 +18,8 @@ package main
 
 import (
 	"context"
+	"path/filepath"
+
 	"github.com/cloudwego-contrib/rgo/pkg/generator"
 	"github.com/cloudwego-contrib/rgo/pkg/global"
 	"github.com/cloudwego-contrib/rgo/pkg/global/config"
@@ -26,7 +28,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"path/filepath"
 )
 
 var (

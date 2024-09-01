@@ -56,7 +56,7 @@ func PathExist(path string) (bool, error) {
 }
 
 // FileExistsInPath checks if a specific file exists at a given path.
-func FileExistsInPath(dir string, filename string) (bool, error) {
+func FileExistsInPath(dir, filename string) (bool, error) {
 	abDir, err := filepath.Abs(dir)
 	if err != nil {
 		return false, err
@@ -93,7 +93,7 @@ func GetCurrentPathWithUnderline() (string, error) {
 		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
 	} else {
 		// Unix
-		strings.TrimSpace(currentPath)
+		currentPath = strings.TrimSpace(currentPath)
 		currentPath = strings.ReplaceAll(currentPath, "/", "_")
 	}
 
@@ -113,7 +113,6 @@ func FindGoModDirectories(root string) ([]string, error) {
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

@@ -18,13 +18,14 @@ package plugin
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/cloudwego/thriftgo/plugin"
 	"go/format"
 	"go/token"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
+	"github.com/cloudwego/thriftgo/plugin"
 )
 
 func GetRGOThriftgoPlugin(pwd, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {

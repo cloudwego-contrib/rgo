@@ -19,10 +19,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/urfave/cli/v2"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
+	"github.com/urfave/cli/v2"
 )
 
 const settingJson = `

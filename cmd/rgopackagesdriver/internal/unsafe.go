@@ -19,9 +19,10 @@ package internal
 import (
 	"go/ast"
 	"go/types"
-	"golang.org/x/tools/go/packages"
 	"sync"
 	_ "unsafe"
+
+	"golang.org/x/tools/go/packages"
 )
 
 //go:linkname loaderPackage golang.org/x/tools/go/packages.loaderPackage

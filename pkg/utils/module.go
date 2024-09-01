@@ -68,7 +68,7 @@ func AddModuleToGoWork(modules ...string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Error adding module(s) to Go workspace: %v", err)
+		return fmt.Errorf("error adding module(s) to Go workspace: %v", err)
 	}
 
 	return RunGoWorkSync()

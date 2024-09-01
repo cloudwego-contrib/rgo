@@ -19,14 +19,16 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
 	"go/token"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego/thriftgo/parser"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*ast.File, error) {
@@ -138,7 +140,6 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 
 	// Create the client methods
 	for _, s := range thrift.Services {
-
 		for _, function := range s.Functions {
 			var t []*ast.Field
 			t = append(t, &ast.Field{
@@ -248,7 +249,6 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 					},
 				})
 		}
-
 	}
 
 	return f, nil
@@ -449,7 +449,6 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 
 	// Create the client methods
 	for _, s := range thrift.Services {
-
 		for _, function := range s.Functions {
 			var t []*ast.Field
 			t = append(t, &ast.Field{
@@ -633,7 +632,6 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 					},
 				})
 		}
-
 	}
 
 	return f, nil
