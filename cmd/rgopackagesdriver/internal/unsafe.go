@@ -25,17 +25,14 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-//go:linkname loaderPackage golang.org/x/tools/go/packages.loaderPackage
 type loaderPackage struct{}
 
-//go:linkname parseValue golang.org/x/tools/go/packages.parseValue
 type parseValue struct {
 	f     *ast.File
 	err   error
 	ready chan struct{}
 }
 
-//go:linkname loader golang.org/x/tools/go/packages.loader
 type loader struct {
 	pkgs map[string]*loaderPackage
 	packages.Config
