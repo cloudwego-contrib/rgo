@@ -18,8 +18,9 @@ package utils
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5"
 	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 func CloneGitRepo(repoURL, branch, path, commit string) error {
@@ -77,20 +78,18 @@ func UpdateGitRepo(branch, path, commit string) error {
 }
 
 func GetLatestCommitID(filePath string) (string, error) {
-	r, err := git.PlainOpen(filePath)
+	absPath, err := filepath.Abs(filePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open the repo: %v", err)
+		return "", err
 	}
 
-	ref, err := r.Head()
+	cmd := exec.Command("git", "log", "-1", "--format=%H")
+	cmd.Dir = absPath
+
+	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get HEAD reference: %v", err)
+		return "", fmt.Errorf("failed to get the latest commit ID: %v", err)
 	}
 
-	commitObj, err := r.CommitObject(ref.Hash())
-	if err != nil {
-		return "", fmt.Errorf("failed to get commit object: %v", err)
-	}
-
-	return commitObj.Hash.String(), nil
+	return strings.TrimSpace(string(out)), nil
 }
