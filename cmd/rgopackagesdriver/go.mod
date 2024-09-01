@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/bytedance/sonic v1.12.2
-	golang.org/x/tools v0.24.0
+	golang.org/x/tools v0.21.0
 )
 
 require (
