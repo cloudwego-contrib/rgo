@@ -20,17 +20,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/cmd/rgopackagesdriver/internal"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"golang.org/x/tools/go/packages"
 	"io"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/cloudwego-contrib/cmd/rgopackagesdriver/internal"
+	"golang.org/x/tools/go/packages"
+)
+
+const (
+	RGOBasePath = ".rgo/cache"
 )
 
 type (
@@ -65,7 +69,7 @@ var (
 )
 
 type GoPackagesDriverLoad interface {
-	// pkgs is a list of package patterns to load.
+	// LoadPackages pkgs is a list of package patterns to load.
 	LoadPackages(cfg *packages.Config, pkgs ...string) []*packages.Package
 }
 
@@ -78,12 +82,12 @@ func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string
 }
 
 func init() {
-	curWorkPath, err := utils.GetCurrentPathWithUnderline()
+	curWorkPath, err := GetCurrentPathWithUnderline()
 	if err != nil {
 		panic(err)
 	}
 
-	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, curWorkPath)
+	rgoBasePath = filepath.Join(GetDefaultUserPath(), RGOBasePath, curWorkPath)
 }
 
 func main() {
@@ -213,4 +217,41 @@ func signalContext(parentCtx context.Context, signals ...os.Signal) (ctx context
 	signal.Notify(ch, signals...)
 
 	return ctx, cancel
+}
+
+func GetCurrentPathWithUnderline() (string, error) {
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	// Windows
+	if strings.HasPrefix(currentPath, "\\") || strings.Contains(currentPath, ":\\") {
+		currentPath = strings.ReplaceAll(currentPath, ":", "")
+		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
+	} else {
+		// Unix
+		currentPath = strings.TrimSpace(currentPath)
+		currentPath = strings.ReplaceAll(currentPath, "/", "_")
+	}
+
+	return currentPath, nil
+}
+
+func GetDefaultUserPath() string {
+	var homeDir string
+	switch runtime.GOOS {
+	case "windows":
+		homeDir = os.Getenv("USERPROFILE")
+	case "darwin":
+		homeDir = os.Getenv("HOME")
+	case "linux":
+		homeDir = os.Getenv("HOME")
+	default:
+		log.Fatalf("Unsupported OS: %s", runtime.GOOS)
+	}
+	if homeDir == "" {
+		log.Fatal("Cannot get user home directory")
+	}
+	return homeDir
 }

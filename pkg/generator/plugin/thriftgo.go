@@ -18,13 +18,14 @@ package plugin
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/cloudwego/thriftgo/plugin"
 	"go/format"
 	"go/token"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
+	"github.com/cloudwego/thriftgo/plugin"
 )
 
 func GetRGOThriftgoPlugin(pwd, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
@@ -60,6 +61,11 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 
 	// Call the function
 	file, err := BuildRGOThriftAstFile(formatServiceName, thrift)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to build rgo thrift ast file: %v", err)),
+		}
+	}
 
 	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
 	if err != nil {

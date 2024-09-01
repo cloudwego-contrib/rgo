@@ -20,11 +20,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/TobiasYin/go-lsp/logs"
 	"github.com/TobiasYin/go-lsp/lsp"
 	"github.com/TobiasYin/go-lsp/lsp/defines"
-	"log"
-	"os"
 )
 
 var logPath *string
@@ -53,7 +54,7 @@ func init() {
 	panic(fmt.Sprintf("logs init error: %v", *logPath))
 }
 
-func RunLspServer() {
+func RunLspServer(cancel context.CancelFunc) {
 	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
@@ -63,4 +64,6 @@ func RunLspServer() {
 	})
 
 	server.Run()
+
+	cancel()
 }

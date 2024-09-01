@@ -17,14 +17,14 @@
 package generator
 
 import (
-	"errors"
 	"fmt"
+	"path/filepath"
+
 	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego/thriftgo/parser"
 	"github.com/cloudwego/thriftgo/plugin"
 	"github.com/cloudwego/thriftgo/sdk"
-	"path/filepath"
 )
 
 func (rg *RGOGenerator) GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath string) error {
@@ -44,7 +44,7 @@ func (rg *RGOGenerator) GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath st
 
 	err = sdk.RunThriftgoAsSDK(rgoSrcPath, []plugin.SDKPlugin{rgoPlugin}, args...)
 	if err != nil {
-		return errors.New(fmt.Sprintf("thriftgo execution failed: %v", err))
+		return fmt.Errorf("thriftgo execution failed: %v", err)
 	}
 
 	return nil

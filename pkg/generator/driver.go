@@ -18,11 +18,12 @@ package generator
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/bytedance/sonic"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"golang.org/x/tools/go/packages"
-	"os"
-	"path/filepath"
 )
 
 func (rg *RGOGenerator) generateRGOPackages(formatServiceName, path string) error {
@@ -54,16 +55,15 @@ func (rg *RGOGenerator) generateRGOPackages(formatServiceName, path string) erro
 
 	outputFile := filepath.Join(rg.RGOBasePath, consts.PkgMetaPath, formatServiceName, "rgo_packages.json")
 
-	err = os.MkdirAll(filepath.Dir(outputFile), 0755)
+	err = os.MkdirAll(filepath.Dir(outputFile), 0o755)
 	if err != nil {
 		return fmt.Errorf("failed to create directories: %v", err)
 	}
 
-	err = os.WriteFile(outputFile, data, 0644)
+	err = os.WriteFile(outputFile, data, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write JSON to file: %v", err)
 	}
 
 	return nil
-
 }

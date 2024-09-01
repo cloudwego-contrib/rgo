@@ -16,8 +16,12 @@
 
 package main
 
-func main() {
-	go RGORun()
+import "context"
 
-	RunLspServer()
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go RGORun(ctx)
+
+	RunLspServer(cancel)
 }

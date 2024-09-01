@@ -18,12 +18,13 @@ package global
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"path/filepath"
-	"time"
 )
 
 var Logger *zap.Logger

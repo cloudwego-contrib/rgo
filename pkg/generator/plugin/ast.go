@@ -19,12 +19,16 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
 	"go/token"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego/thriftgo/parser"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*ast.File, error) {
@@ -136,7 +140,6 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 
 	// Create the client methods
 	for _, s := range thrift.Services {
-
 		for _, function := range s.Functions {
 			var t []*ast.Field
 			t = append(t, &ast.Field{
@@ -164,7 +167,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 				Type: &ast.Ellipsis{
 					Elt: &ast.SelectorExpr{
 						X:   ast.NewIdent("callopt"),
-						Sel: ast.NewIdent("Options"),
+						Sel: ast.NewIdent("Option"),
 					},
 				},
 			})
@@ -180,7 +183,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 						},
 					},
 				},
-				Name: ast.NewIdent(strings.Title(function.Name)),
+				Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: t,
@@ -213,7 +216,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 				},
 			},
 				&ast.FuncDecl{
-					Name: ast.NewIdent(strings.Title(function.Name)),
+					Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
 							List: t,
@@ -246,7 +249,6 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 					},
 				})
 		}
-
 	}
 
 	return f, nil
@@ -447,7 +449,6 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 
 	// Create the client methods
 	for _, s := range thrift.Services {
-
 		for _, function := range s.Functions {
 			var t []*ast.Field
 			t = append(t, &ast.Field{
@@ -491,7 +492,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 						},
 					},
 				},
-				Name: ast.NewIdent(strings.Title(function.Name)),
+				Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: t,
@@ -524,7 +525,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 								&ast.CallExpr{
 									Fun: &ast.SelectorExpr{
 										X:   ast.NewIdent("c"),
-										Sel: ast.NewIdent("Client." + strings.Title(function.Name)),
+										Sel: ast.NewIdent("Client." + cases.Title(language.Und).String(function.Name)),
 									},
 									Args: []ast.Expr{
 										ast.NewIdent("ctx"),
@@ -561,7 +562,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 				},
 			},
 				&ast.FuncDecl{
-					Name: ast.NewIdent(strings.Title(function.Name)),
+					Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
 							List: t,
@@ -594,7 +595,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 									&ast.CallExpr{
 										Fun: &ast.SelectorExpr{
 											X:   ast.NewIdent("defaultClient"),
-											Sel: ast.NewIdent(strings.Title(function.Name)),
+											Sel: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 										},
 										Args: []ast.Expr{
 											ast.NewIdent("ctx"),
@@ -631,7 +632,6 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 					},
 				})
 		}
-
 	}
 
 	return f, nil
