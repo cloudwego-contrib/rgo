@@ -20,20 +20,28 @@ git checkout feat/new_rgo
 ## 编译生成 gopackagesdriver
 
 ```shell
-cd driver
+cd cmd/rgopackagesdriver
 
-go mod tidy
-
-go build -o rgo_packages_driver .
+go install
 ```
 
 ## 在 VS-Code 中调试运行插件
-在 VS-Code 中打开克隆下来的 rgo/lsp 项目
+在 VS-Code 中打开克隆下来的 ide_extensions/rgo_vscode 项目
 
 ![doc/vscode_open.png](doc/vscode_open.png)
 
+在 rgo_vscode 项目根目录下执行以下命令安装依赖
 
-执行以下命令安装依赖
+若从未安装过 nodejs 依赖，macos 执行
+```shell
+brew install node
+```
+linux 执行
+```shell
+sudo apt-get install nodejs
+```
+
+执行以下命令安装 npm 依赖
 ```shell
 npm install
 ```
