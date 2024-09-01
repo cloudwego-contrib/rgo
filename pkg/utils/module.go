@@ -54,7 +54,7 @@ func InitGoWork(modules ...string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Error initializing Go workspace: %v\n", err)
+		return fmt.Errorf("error initializing Go workspace: %v", err)
 	}
 
 	return nil
