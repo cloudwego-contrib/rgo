@@ -32,6 +32,13 @@ go build -o go-lsp .
 mv go-lsp ../../ide_extensions/rgo_vscode/bin/
 ```
 
+## 编译安装 rgo
+
+```shell
+cd ../cmd/rgo
+go install
+```
+
 ## 在 VS-Code 中调试运行插件
 在 VS-Code 中打开克隆下来的 ide_extensions/rgo_vscode 项目
 
@@ -62,7 +69,7 @@ npm install
 ```shell
 mkdir -p ~/rgo_test
 cd ~/rgo_test
-go mod init rgo_test
+rgo init # 初始化项目
 ```
 
 ## 在根目录下新建配置文件 rgo_config.yaml
