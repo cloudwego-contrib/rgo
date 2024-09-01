@@ -20,17 +20,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/cmd/rgopackagesdriver/internal"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"golang.org/x/tools/go/packages"
 	"io"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/cloudwego-contrib/cmd/rgopackagesdriver/internal"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
+	"golang.org/x/tools/go/packages"
 )
 
 type (
@@ -65,7 +66,7 @@ var (
 )
 
 type GoPackagesDriverLoad interface {
-	// pkgs is a list of package patterns to load.
+	// LoadPackages pkgs is a list of package patterns to load.
 	LoadPackages(cfg *packages.Config, pkgs ...string) []*packages.Package
 }
 

@@ -19,13 +19,14 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"go/format"
 	"go/token"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
+	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 )
 
 func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath string) error {

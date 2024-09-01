@@ -19,10 +19,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/urfave/cli/v2"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
+	"github.com/urfave/cli/v2"
 )
 
 const settingJson = `
@@ -83,11 +84,11 @@ func InitProject(c *cli.Context) error {
 		// Create the .vscode directory
 		err = os.MkdirAll(filepath.Join(workdir, ".vscode"), os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("failed to create vscode directory: %v\n", err)
+			return fmt.Errorf("failed to create vscode directory: %v", err)
 		}
 		err := os.WriteFile(filepath.Join(workdir, ".vscode", "settings.json"), []byte(settingJson), os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("failed to create vscode settings.json: %v\n", err)
+			return fmt.Errorf("failed to create vscode settings.json: %v", err)
 		}
 	}
 	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)

@@ -19,6 +19,10 @@ package generator
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	"github.com/cloudwego-contrib/rgo/pkg/global"
 	"github.com/cloudwego-contrib/rgo/pkg/global/config"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
@@ -26,9 +30,6 @@ import (
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
-	"path/filepath"
-	"sync"
-	"time"
 )
 
 type RGOGenerator struct {

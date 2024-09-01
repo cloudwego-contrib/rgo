@@ -18,14 +18,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/global/config"
 	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
-	"os"
-	"path/filepath"
 )
 
 var (
@@ -55,7 +56,6 @@ func InitConfig() {
 	if err != nil {
 		panic("read rgo_config failed:" + err.Error())
 	}
-
 }
 
 func GenerateRGOCode() error {
