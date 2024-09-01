@@ -28,3 +28,6 @@ output/*
 # Vscode files
 .vscode
 
+ide_extensions/rgo_vscode/node_modules/
+ide_extensions/rgo_vscode/out
+
