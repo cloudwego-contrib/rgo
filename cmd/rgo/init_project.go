@@ -12,7 +12,7 @@ import (
 const settingJson = `
 {
   "go.toolsEnvVars": {
-    "GOPACKAGESDRIVER":"${GOPATH}/driver"
+    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/driver"
   },
   "go.enableCodeLens": {
     "runtest": false
