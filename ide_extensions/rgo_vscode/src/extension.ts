@@ -78,8 +78,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 export async function startRgoLspServer() {
   const serverOptions: ServerOptions = {
-    run: { command: path.join(__dirname, "../bin", "go-lsp") },
-    debug: { command: path.join(__dirname, "../bin", "go-lsp") },
+    run: { command: path.join(__dirname, "../bin", "rgo_lsp_server") },
+    debug: { command: path.join(__dirname, "../bin", "rgo_lsp_server") },
   };
 
   const clientOptions: LanguageClientOptions = {

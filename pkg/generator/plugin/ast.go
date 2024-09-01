@@ -164,7 +164,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 				Type: &ast.Ellipsis{
 					Elt: &ast.SelectorExpr{
 						X:   ast.NewIdent("callopt"),
-						Sel: ast.NewIdent("CallOptions"),
+						Sel: ast.NewIdent("Options"),
 					},
 				},
 			})
