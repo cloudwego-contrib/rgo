@@ -30,9 +30,6 @@ func InitGoMod(moduleName, path string) error {
 
 	cmd.Dir = path
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to initialize go.mod in path '%s': %w", path, err)
@@ -41,8 +38,6 @@ func InitGoMod(moduleName, path string) error {
 	// Set Go version to 1.18
 	cmd = exec.Command("go", "mod", "edit", "-go=1.18")
 	cmd.Dir = path
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 
 	err = cmd.Run()
 	if err != nil {
@@ -156,6 +151,5 @@ func RunGoModTidyInDir(dir string) error {
 		return fmt.Errorf("failed to execute 'go mod tidy' in directory %s: %v, output: %s", dir, err, string(output))
 	}
 
-	fmt.Println("go mod tidy executed successfully in directory:", dir)
 	return nil
 }

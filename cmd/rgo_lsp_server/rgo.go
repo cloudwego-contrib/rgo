@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"github.com/cloudwego-contrib/rgo/pkg/generator"
 	"github.com/cloudwego-contrib/rgo/pkg/global"
 	"github.com/cloudwego-contrib/rgo/pkg/global/config"
@@ -25,10 +26,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 )
 
 var (
@@ -60,13 +58,13 @@ func init() {
 	g = generator.NewRGOGenerator(c, rgoBasePath)
 }
 
-func RGORun() {
-	go WatchConfig(g)
+func RGORun(ctx context.Context) {
+	go WatchConfig(g, ctx)
 
 	g.Run()
 }
 
-func WatchConfig(g *generator.RGOGenerator) {
+func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 	viper.WatchConfig()
 
 	// hook function for config file change
@@ -86,8 +84,5 @@ func WatchConfig(g *generator.RGOGenerator) {
 
 	viper.OnConfigChange(config.ConfigChangeHandler)
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-
-	<-sigCh
+	<-ctx.Done()
 }

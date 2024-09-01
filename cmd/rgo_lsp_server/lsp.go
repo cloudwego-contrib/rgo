@@ -53,7 +53,7 @@ func init() {
 	panic(fmt.Sprintf("logs init error: %v", *logPath))
 }
 
-func RunLspServer() {
+func RunLspServer(cancel context.CancelFunc) {
 	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
@@ -63,4 +63,6 @@ func RunLspServer() {
 	})
 
 	server.Run()
+
+	cancel()
 }

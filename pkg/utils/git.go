@@ -17,10 +17,8 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"os/exec"
 )
 
@@ -61,36 +59,16 @@ func CloneGitRepo(repoURL, branch, path, commit string) error {
 }
 
 func UpdateGitRepo(branch, path, commit string) error {
-	repo, err := git.PlainOpen(path)
-	if err != nil {
-		return fmt.Errorf("failed to open git repository: %v", err)
-	}
-
-	w, err := repo.Worktree()
-	if err != nil {
-		return fmt.Errorf("failed to get worktree: %v", err)
-	}
-
-	// Pull the latest changes from the remote branch
-	err = w.Pull(&git.PullOptions{
-		RemoteName:    "origin",
-		ReferenceName: plumbing.NewBranchReferenceName(branch),
-		Force:         true, // force to update in case of branch conflict
-	})
-
-	// If the repository is already up to date, continue without an error
-	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+	// Change directory to the repository path
+	cmd := exec.Command("git", "-C", path, "pull", "origin", branch, "--force")
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to pull the repo: %v", err)
 	}
 
 	// If commit is not empty, checkout to the specified commit
 	if commit != "" {
-		// Checkout to the specified commit
-		err = w.Checkout(&git.CheckoutOptions{
-			Hash:  plumbing.NewHash(commit),
-			Force: true, // force to checkout to the specific commit
-		})
-		if err != nil {
+		cmd = exec.Command("git", "-C", path, "checkout", commit, "--force")
+		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to checkout to commit %s: %v", commit, err)
 		}
 	}
