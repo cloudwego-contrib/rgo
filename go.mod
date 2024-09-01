@@ -9,7 +9,6 @@ require (
 	github.com/cloudwego/thriftgo v0.3.15
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/google/uuid v1.6.0
 	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/spf13/viper v1.19.0
 	github.com/urfave/cli/v2 v2.27.4
