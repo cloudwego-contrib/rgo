@@ -25,6 +25,13 @@ cd cmd/rgopackagesdriver
 go install
 ```
 
+## 编译生成 rgo_lsp_server
+```shell
+cd ../cmd/rgo/rgo_lsp_server
+go build -o go-lsp .
+mv go-lsp ../../ide_extensions/rgo_vscode/bin/
+```
+
 ## 在 VS-Code 中调试运行插件
 在 VS-Code 中打开克隆下来的 ide_extensions/rgo_vscode 项目
 
@@ -46,9 +53,7 @@ sudo apt-get install nodejs
 npm install
 ```
 
-点开 ./client/src/extensions.ts 并在侧边栏中点击 Run Extension
-
-![vscode-extension.png](./doc/vscode-extension.png)
+使用快捷键 F5 即可本地启动 vscode 插件
 
 ## 新建测试项目
 
@@ -58,11 +63,6 @@ npm install
 mkdir -p ~/rgo_test
 cd ~/rgo_test
 go mod init rgo_test
-```
-
-将刚刚编译的 driver 文件移至根目录
-```shell
-mv ~/rgo/rgo_packages_driver ~/rgo_test/
 ```
 
 ## 在根目录下新建配置文件 rgo_config.yaml
@@ -94,7 +94,7 @@ vim .vscode/settings.json
 ```json
 {
   "go.toolsEnvVars": {
-    "GOPACKAGESDRIVER":"${workspaceFolder}/rgo_packages_driver"
+    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/rgopackagesdriver"
   },
   "go.enableCodeLens": {
     "runtest": false
