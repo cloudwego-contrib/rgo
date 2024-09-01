@@ -23,6 +23,8 @@ import (
 	"github.com/cloudwego/thriftgo/parser"
 	"go/ast"
 	"go/token"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"path/filepath"
 	"strings"
 )
@@ -180,7 +182,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 						},
 					},
 				},
-				Name: ast.NewIdent(strings.Title(function.Name)),
+				Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: t,
@@ -213,7 +215,7 @@ func BuildRGOThriftAstFile(formatServiceName string, thrift *parser.Thrift) (*as
 				},
 			},
 				&ast.FuncDecl{
-					Name: ast.NewIdent(strings.Title(function.Name)),
+					Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
 							List: t,
@@ -491,7 +493,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 						},
 					},
 				},
-				Name: ast.NewIdent(strings.Title(function.Name)),
+				Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: t,
@@ -524,7 +526,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 								&ast.CallExpr{
 									Fun: &ast.SelectorExpr{
 										X:   ast.NewIdent("c"),
-										Sel: ast.NewIdent("Client." + strings.Title(function.Name)),
+										Sel: ast.NewIdent("Client." + cases.Title(language.Und).String(function.Name)),
 									},
 									Args: []ast.Expr{
 										ast.NewIdent("ctx"),
@@ -561,7 +563,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 				},
 			},
 				&ast.FuncDecl{
-					Name: ast.NewIdent(strings.Title(function.Name)),
+					Name: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
 							List: t,
@@ -594,7 +596,7 @@ func BuildRGOGenThriftAstFile(serviceName, formatServiceName string, thrift *par
 									&ast.CallExpr{
 										Fun: &ast.SelectorExpr{
 											X:   ast.NewIdent("defaultClient"),
-											Sel: ast.NewIdent(strings.Title(function.Name)),
+											Sel: ast.NewIdent(cases.Title(language.Und).String(function.Name)),
 										},
 										Args: []ast.Expr{
 											ast.NewIdent("ctx"),

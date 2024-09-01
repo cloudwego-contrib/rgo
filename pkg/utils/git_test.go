@@ -51,7 +51,7 @@ func TestGetLatestCommitID(t *testing.T) {
 		t.Fatal(err)
 	}
 	s, err := GetLatestCommitID("./tmp/hertz")
-	t.Logf(s)
+	t.Log(s)
 	if err != nil {
 		t.Fatal(err)
 	}

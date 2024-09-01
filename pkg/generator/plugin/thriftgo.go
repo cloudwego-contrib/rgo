@@ -60,6 +60,11 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 
 	// Call the function
 	file, err := BuildRGOThriftAstFile(formatServiceName, thrift)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to build rgo thrift ast file: %v", err)),
+		}
+	}
 
 	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
 	if err != nil {

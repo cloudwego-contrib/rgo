@@ -93,9 +93,7 @@ func GetCurrentPathWithUnderline() (string, error) {
 		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
 	} else {
 		// Unix
-		if strings.HasPrefix(currentPath, "/") {
-			currentPath = currentPath[1:]
-		}
+		strings.TrimSpace(currentPath)
 		currentPath = strings.ReplaceAll(currentPath, "/", "_")
 	}
 

@@ -18,7 +18,6 @@ package utils
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -55,7 +54,7 @@ func InitGoWork(modules ...string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.New(fmt.Sprintf("Error initializing Go workspace: %v\n", err))
+		return fmt.Errorf("Error initializing Go workspace: %v\n", err)
 	}
 
 	return nil

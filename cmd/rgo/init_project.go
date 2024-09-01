@@ -83,11 +83,11 @@ func InitProject(c *cli.Context) error {
 		// Create the .vscode directory
 		err = os.MkdirAll(filepath.Join(workdir, ".vscode"), os.ModePerm)
 		if err != nil {
-			return errors.New(fmt.Sprintf("failed to create vscode directory: %v\n", err))
+			return fmt.Errorf("failed to create vscode directory: %v\n", err)
 		}
 		err := os.WriteFile(filepath.Join(workdir, ".vscode", "settings.json"), []byte(settingJson), os.ModePerm)
 		if err != nil {
-			return errors.New(fmt.Sprintf("failed to create vscode settings.json: %v\n", err))
+			return fmt.Errorf("failed to create vscode settings.json: %v\n", err)
 		}
 	}
 	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
