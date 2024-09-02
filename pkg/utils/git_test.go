@@ -38,32 +38,42 @@ func TestCloneGitRepo(t *testing.T) {
 }
 
 func TestUpdateGitRepo(t *testing.T) {
-	_, err := os.Stat("./tmp/hertz")
+	tempDir, err := os.MkdirTemp("", "test")
 	if err != nil {
-		if os.IsNotExist(err) {
-			TestCloneGitRepo(t)
-		}
-		t.Fatal(err)
+		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
-	err = UpdateGitRepo("develop", "./tmp/hertz", "")
+	err = os.Chdir(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	os.RemoveAll("./tmp/hertz")
+	err = CloneGitRepo("https://github.com/cloudwego/hertz.git", "develop", tempDir, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = UpdateGitRepo("develop", tempDir, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.RemoveAll(tempDir)
 }
 
 func TestGetLatestCommitID(t *testing.T) {
-	_, err := os.Stat("./tmp/hertz")
+	tempDir, err := os.MkdirTemp("", "test")
 	if err != nil {
-		if os.IsNotExist(err) {
-			TestCloneGitRepo(t)
-		}
+		t.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	err = os.Chdir(tempDir)
+	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := GetLatestCommitID("./tmp/hertz")
+	err = CloneGitRepo("https://github.com/cloudwego/hertz.git", "develop", tempDir, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := GetLatestCommitID(tempDir)
 	t.Log(s)
 	if err != nil {
 		t.Fatal(err)
 	}
-	os.RemoveAll("./tmp/hertz")
+	os.RemoveAll(tempDir)
 }
