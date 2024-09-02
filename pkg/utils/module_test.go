@@ -63,7 +63,7 @@ func TestRunGoModTidyInDir(t *testing.T) {
 	// Create a dummy go.mod file in the temporary directory
 	goModPath := filepath.Join(tempDir, "go.mod")
 	content := `module example.com/testmodule`
-	if err := os.WriteFile(goModPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(goModPath, []byte(content), 0o644); err != nil {
 		t.Fatalf("Failed to write go.mod file: %v", err)
 	}
 

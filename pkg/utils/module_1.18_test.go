@@ -35,7 +35,7 @@ func TestAddModuleToGoWork(t *testing.T) {
 	modules := []string{"module1", "module2"}
 	for _, module := range modules {
 		modulePath := filepath.Join(tempDir, module)
-		err := os.Mkdir(modulePath, 0755)
+		err := os.Mkdir(modulePath, 0o755)
 		if err != nil {
 			t.Fatalf("Failed to create module directory %s: %v", module, err)
 		}
@@ -90,7 +90,7 @@ func TestInitGoWork(t *testing.T) {
 	modules := []string{"module1", "module2"}
 	for _, module := range modules {
 		modulePath := filepath.Join(tempDir, module)
-		err := os.Mkdir(modulePath, 0755)
+		err := os.Mkdir(modulePath, 0o755)
 		if err != nil {
 			t.Fatalf("Failed to create module directory %s: %v", module, err)
 		}
@@ -143,7 +143,7 @@ func TestRemoveModulesFromGoWork(t *testing.T) {
 use ./module2
 use ./module3
 `
-	if err := os.WriteFile(goWorkPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(goWorkPath, []byte(content), 0o644); err != nil {
 		t.Fatalf("Failed to write go.work file: %v", err)
 	}
 
@@ -153,7 +153,7 @@ use ./module3
 	modules := []string{"module1", "module2"}
 	for _, module := range modules {
 		modulePath := filepath.Join(tempDir, module)
-		err := os.Mkdir(modulePath, 0755)
+		err := os.Mkdir(modulePath, 0o755)
 		if err != nil {
 			t.Fatalf("Failed to create module directory %s: %v", module, err)
 		}
