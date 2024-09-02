@@ -22,7 +22,16 @@ import (
 )
 
 func TestCloneGitRepo(t *testing.T) {
-	err := CloneGitRepo("https://github.com/cloudwego/hertz.git", "develop", "./tmp/hertz", "")
+	tempDir, err := os.MkdirTemp("", "test")
+	if err != nil {
+		t.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	err = os.Chdir(tempDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = CloneGitRepo("https://github.com/cloudwego/hertz.git", "develop", tempDir, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,6 +49,7 @@ func TestUpdateGitRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	os.RemoveAll("./tmp/hertz")
 }
 
 func TestGetLatestCommitID(t *testing.T) {
@@ -55,4 +65,5 @@ func TestGetLatestCommitID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	os.RemoveAll("./tmp/hertz")
 }
