@@ -30,4 +30,5 @@ output/*
 
 ide_extensions/rgo_vscode/node_modules/
 ide_extensions/rgo_vscode/out
+ide_extensions/rgo_vscode/bin
 
