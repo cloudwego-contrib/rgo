@@ -1,4 +1,4 @@
-module github.com/cloudwego-contrib/cmd/rgopackagesdriver
+module github.com/cloudwego-contrib/rgo/cmd/rgopackagesdriver
 
 go 1.17
 

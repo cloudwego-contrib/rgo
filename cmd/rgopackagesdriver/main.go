@@ -29,7 +29,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/cmd/rgopackagesdriver/internal"
+	"github.com/cloudwego-contrib/rgo/cmd/rgopackagesdriver/internal"
 	"golang.org/x/tools/go/packages"
 )
 
