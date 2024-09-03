@@ -21,10 +21,10 @@ import (
 	"os"
 	"path/filepath"
 
-	config2 "github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
-	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
+	thrift_plugin "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -36,7 +36,7 @@ var (
 	currentPath string
 	rgoBasePath string
 
-	c *config2.RGOConfig
+	c *config.RGOConfig
 )
 
 func InitConfig() {
@@ -53,7 +53,7 @@ func InitConfig() {
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	c, err = config2.ReadConfig(idlConfigPath)
+	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
 		panic("read rgo_config failed:" + err.Error())
 	}
@@ -93,7 +93,7 @@ func GenerateRGOCode() error {
 
 				path := filepath.Join(buildPath, c.IDLs[k].FormatServiceName)
 
-				rgoPlugin, err := plugin2.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
+				rgoPlugin, err := thrift_plugin.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
 				if err != nil {
 					return err
 				}
