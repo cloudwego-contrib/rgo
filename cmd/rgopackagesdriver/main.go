@@ -28,7 +28,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/cloudwego-contrib/rgo/cmd/rgopackagesdriver/internal"
 	"golang.org/x/tools/go/packages"
 )
@@ -157,7 +156,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	loader.Ret = ret
 	loader.LoadPackages(cfg, "context", "fmt", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt")
 
-	data, err := sonic.Marshal(ret)
+	data, err := json.Marshal(ret)
 	if err != nil {
 		return fmt.Errorf("json marshal error: %v", err.Error())
 	}
@@ -192,7 +191,7 @@ func getTargetPackages(path string) ([]*packages.Package, error) {
 				}
 
 				var response []*packages.Package
-				if err := sonic.Unmarshal(data, &response); err != nil {
+				if err := json.Unmarshal(data, &response); err != nil {
 					return nil, fmt.Errorf("failed to parse json file %s: %v", jsonFilePath, err)
 				}
 

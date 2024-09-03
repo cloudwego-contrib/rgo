@@ -25,8 +25,16 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-type loaderPackage struct{}
-
+type loaderPackage struct {
+	*packages.Package
+	importErrors map[string]error // maps each bad import to its error
+	loadOnce     sync.Once
+	color        uint8 // for cycle detection
+	needsrc      bool  // load from source (Mode >= LoadTypes)
+	needtypes    bool  // type information is either requested or depended on
+	initial      bool  // package was matched by a pattern
+	goVersion    int   // minor version number of go command on PATH
+}
 type parseValue struct {
 	f     *ast.File
 	err   error
