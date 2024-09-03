@@ -34,12 +34,13 @@ type loaderPackage struct {
 	needtypes    bool  // type information is either requested or depended on
 	initial      bool  // package was matched by a pattern
 	goVersion    int   // minor version number of go command on PATH
-}
+} //golint:ignore
+
 type parseValue struct {
 	f     *ast.File
 	err   error
 	ready chan struct{}
-}
+} //golint:ignore
 
 type loader struct {
 	pkgs map[string]*loaderPackage
@@ -56,7 +57,7 @@ type loader struct {
 	// This makes it easier for us to get the conditions where
 	// we need certain modes right.
 	requestedMode packages.LoadMode
-}
+} //golint:ignore
 
 //go:linkname defaultDriver golang.org/x/tools/go/packages.defaultDriver
 func defaultDriver(cfg *packages.Config, patterns ...string) (*packages.DriverResponse, bool, error)
