@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudwego-contrib/rgo/pkg/global"
-	"github.com/cloudwego-contrib/rgo/pkg/global/config"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/viper"
@@ -91,7 +91,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 	rg.wg.Wait()
 
 	if err := g.Wait(); err != nil {
-		global.Logger.Error(fmt.Sprintf("Failed to process all idl repos: %v", err))
+		rlog.Error(fmt.Sprintf("Failed to process all idl repos: %v", err))
 	}
 }
 
@@ -100,28 +100,28 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
-		global.Logger.Error(fmt.Sprintf("Failed to check if path %s exists: %v", filePath, err))
+		rlog.Error(fmt.Sprintf("Failed to check if path %s exists: %v", filePath, err))
 		return
 	}
 
 	if !exist {
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
+			rlog.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 			return
 		}
 		changedRepoCommit[repo.RepoName] = commit
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Failed to get latest commit id for %s: %v", repo, err))
+			rlog.Error(fmt.Sprintf("Failed to get latest commit id for %s: %v", repo, err))
 			return
 		}
 
 		if id != repo.Commit {
 			commit, err := rg.updateRemoteRepo(repo, filePath, repo.Commit)
 			if err != nil {
-				global.Logger.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
+				rlog.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
 				return
 			}
 			changedRepoCommit[repo.RepoName] = commit
@@ -147,7 +147,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		err := rg.GenerateRGOCode(idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Failed to generate rgo code for %s: %v", idl.ServiceName, err))
+			rlog.Error(fmt.Sprintf("Failed to generate rgo code for %s: %v", idl.ServiceName, err))
 		}
 
 	}
@@ -190,7 +190,7 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			global.Logger.Error(fmt.Sprintf("Failed to update commit for %s: %v", repoName, r))
+			rlog.Error(fmt.Sprintf("Failed to update commit for %s: %v", repoName, r))
 		}
 	}()
 

@@ -21,9 +21,10 @@ import (
 	"os"
 	"path/filepath"
 
-	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
-	"github.com/cloudwego-contrib/rgo/pkg/global/config"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
+	thrift_plugin "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -92,7 +93,7 @@ func GenerateRGOCode() error {
 
 				path := filepath.Join(buildPath, c.IDLs[k].FormatServiceName)
 
-				rgoPlugin, err := plugin2.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
+				rgoPlugin, err := thrift_plugin.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
 				if err != nil {
 					return err
 				}

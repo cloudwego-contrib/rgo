@@ -24,7 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
 	"github.com/cloudwego/thriftgo/parser"
 
 	"golang.org/x/text/cases"

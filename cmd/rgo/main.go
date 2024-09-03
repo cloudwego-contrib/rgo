@@ -20,7 +20,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
 	"github.com/urfave/cli/v2"
 )
 
