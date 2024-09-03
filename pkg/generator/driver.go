@@ -17,11 +17,11 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/bytedance/sonic"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"golang.org/x/tools/go/packages"
 )
@@ -48,7 +48,7 @@ func (rg *RGOGenerator) generateRGOPackages(formatServiceName, path string) erro
 
 	Packages = append(Packages, pkgs...)
 
-	data, err := sonic.Marshal(Packages)
+	data, err := json.Marshal(Packages)
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
