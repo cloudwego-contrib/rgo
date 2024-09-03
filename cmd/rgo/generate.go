@@ -21,9 +21,10 @@ import (
 	"os"
 	"path/filepath"
 
+	config2 "github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
 	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
-	"github.com/cloudwego-contrib/rgo/pkg/global/config"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -35,7 +36,7 @@ var (
 	currentPath string
 	rgoBasePath string
 
-	c *config.RGOConfig
+	c *config2.RGOConfig
 )
 
 func InitConfig() {
@@ -52,7 +53,7 @@ func InitConfig() {
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	c, err = config.ReadConfig(idlConfigPath)
+	c, err = config2.ReadConfig(idlConfigPath)
 	if err != nil {
 		panic("read rgo_config failed:" + err.Error())
 	}

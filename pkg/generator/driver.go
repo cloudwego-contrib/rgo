@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"golang.org/x/tools/go/packages"
 )
 

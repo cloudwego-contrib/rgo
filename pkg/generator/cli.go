@@ -24,8 +24,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 )
 

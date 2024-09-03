@@ -20,10 +20,10 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/generator"
-	"github.com/cloudwego-contrib/rgo/pkg/global"
-	"github.com/cloudwego-contrib/rgo/pkg/global/config"
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -49,11 +49,11 @@ func init() {
 
 	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	global.InitLogger(rgoBasePath)
+	rlog.InitLogger(rgoBasePath)
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
-		global.Logger.Warn("read rgo_config failed", zap.Error(err))
+		rlog.Warn("read rgo_config failed", zap.Error(err))
 	}
 
 	g = generator.NewRGOGenerator(c, rgoBasePath)
@@ -73,10 +73,10 @@ func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 		viper.Reset()
 		c, err := config.ReadConfig(idlConfigPath)
 		if err != nil {
-			global.Logger.Error("read rgo_config failed", zap.Error(err))
+			rlog.Error("read rgo_config failed", zap.Error(err))
 		}
 
-		global.Logger.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
+		rlog.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
 
 		g := generator.NewRGOGenerator(c, g.RGOBasePath)
 

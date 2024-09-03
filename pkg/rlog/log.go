@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package global
+package rlog
 
 import (
 	"fmt"
 	"path/filepath"
 	"time"
 
-	"github.com/cloudwego-contrib/rgo/pkg/global/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var Logger *zap.Logger
+var logger *zap.Logger
 
 func InitLogger(rgoBasePath string) {
 	currentTime := time.Now().Format("2006-01-02")
@@ -52,8 +52,48 @@ func InitLogger(rgoBasePath string) {
 		zapcore.InfoLevel,
 	)
 
-	Logger = zap.New(core, zap.AddCaller())
-	defer Logger.Sync()
+	logger = zap.New(core, zap.AddCaller())
+	defer logger.Sync()
 
-	Logger.Info("test log info")
+	logger.Info("test log info")
+}
+
+func Debug(s string, fields ...zap.Field) {
+	logger.Info(s, fields...)
+}
+
+func Info(s string, fields ...zap.Field) {
+	logger.Info(s, fields...)
+}
+
+func Warn(s string, fields ...zap.Field) {
+	logger.Warn(s, fields...)
+}
+
+func Error(s string, fields ...zap.Field) {
+	logger.Error(s, fields...)
+}
+
+func Fatal(s string, fields ...zap.Field) {
+	logger.Fatal(s, fields...)
+}
+
+func Debugf(format string, args ...interface{}) {
+	logger.Sugar().Debugf(format, args...)
+}
+
+func Infof(format string, args ...interface{}) {
+	logger.Sugar().Infof(format, args...)
+}
+
+func Warnf(format string, args ...interface{}) {
+	logger.Sugar().Warnf(format, args...)
+}
+
+func Errorf(format string, args ...interface{}) {
+	logger.Sugar().Errorf(format, args...)
+}
+
+func Fatalf(format string, args ...interface{}) {
+	logger.Sugar().Fatalf(format, args...)
 }
