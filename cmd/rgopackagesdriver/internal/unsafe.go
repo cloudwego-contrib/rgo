@@ -34,21 +34,23 @@ type loaderPackage struct {
 	needtypes    bool  // type information is either requested or depended on
 	initial      bool  // package was matched by a pattern
 	goVersion    int   // minor version number of go command on PATH
-} //golint:ignore
+}
 
 type parseValue struct {
 	f     *ast.File
 	err   error
 	ready chan struct{}
-} //golint:ignore
+}
 
 type loader struct {
-	pkgs map[string]*loaderPackage
+	pkgs map[string]*loaderPackage //nolint:unused
 	packages.Config
-	sizes        types.Sizes // non-nil if needed by mode
-	parseCache   map[string]*parseValue
-	parseCacheMu sync.Mutex
-	exportMu     sync.Mutex // enforces mutual exclusion of exportdata operations
+	// non-nil if needed by mode
+	sizes        types.Sizes            //nolint:unused
+	parseCache   map[string]*parseValue //nolint:unused
+	parseCacheMu sync.Mutex             //nolint:unused
+	// enforces mutual exclusion of exportdata operations
+	exportMu sync.Mutex //nolint:unused
 
 	// Config.Mode contains the implied mode (see impliedLoadMode).
 	// Implied mode contains all the fields we need the data for.
@@ -56,8 +58,8 @@ type loader struct {
 	// We'll zero them out before returning packages to the user.
 	// This makes it easier for us to get the conditions where
 	// we need certain modes right.
-	requestedMode packages.LoadMode
-} //golint:ignore
+	requestedMode packages.LoadMode //nolint:unused
+}
 
 //go:linkname defaultDriver golang.org/x/tools/go/packages.defaultDriver
 func defaultDriver(cfg *packages.Config, patterns ...string) (*packages.DriverResponse, bool, error)
