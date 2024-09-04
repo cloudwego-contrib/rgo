@@ -25,6 +25,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+//nolint:unused
 type loaderPackage struct {
 	*packages.Package
 	importErrors map[string]error // maps each bad import to its error
@@ -36,6 +37,7 @@ type loaderPackage struct {
 	goVersion    int   // minor version number of go command on PATH
 }
 
+//nolint:unused
 type parseValue struct {
 	f     *ast.File
 	err   error
