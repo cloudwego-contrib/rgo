@@ -74,7 +74,7 @@ func Init() *cli.App {
 			Name:  InitName,
 			Usage: InitUsage,
 			Flags: []cli.Flag{
-				&cli.StringFlag{Name: typeFlag, Usage: "ide type, default: vscode", DefaultText: "vscode"},
+				&cli.StringFlag{Name: consts.TypeFlag, Usage: "ide type, default: vscode", DefaultText: consts.VSCode},
 			},
 			Action: InitProject,
 		},

@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -56,7 +57,7 @@ const settingJson = `
   "go.vetOnSave": "off"
 }`
 
-const typeFlag = "type"
+var re = regexp.MustCompile(`(?m)"go\.toolsEnvVars"\s*:\s*\{[^}]*"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`)
 
 func InitProject(c *cli.Context) error {
 	workdir, err := os.Getwd()
@@ -68,19 +69,19 @@ func InitProject(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	idetype := c.String(typeFlag)
+	idetype := c.String(consts.TypeFlag)
 	if idetype == "" {
-		idetype = "vscode"
+		idetype = consts.VSCode
 	}
 	switch idetype {
-	case "vscode":
+	case consts.VSCode:
 		// Create the .vscode directory
-		err = os.MkdirAll(filepath.Join(workdir, ".vscode"), os.ModePerm)
+		err = os.MkdirAll(filepath.Join(workdir, consts.VSCodeDir), os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("failed to create vscode directory: %v", err)
 		}
 
-		settingsFilePath := filepath.Join(workdir, ".vscode", "settings.json")
+		settingsFilePath := filepath.Join(workdir, consts.VSCodeDir, consts.SettingsJson)
 
 		exist, err := utils.PathExist(settingsFilePath)
 		if err != nil {
@@ -95,11 +96,8 @@ func InitProject(c *cli.Context) error {
 		} else {
 			fileContent, err := os.ReadFile(settingsFilePath)
 			if err != nil {
-				fmt.Printf("Failed to read vscode settings.json: %v\n", err)
-				return err
+				return fmt.Errorf("Failed to read vscode settings.json: %v\n", err)
 			}
-
-			re := regexp.MustCompile(`(?m)"go\.toolsEnvVars"\s*:\s*\{[^}]*"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`)
 
 			updatedContent := re.ReplaceAllStringFunc(string(fileContent), func(match string) string {
 				return regexp.MustCompile(`"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`).ReplaceAllString(match, `"GOPACKAGESDRIVER": "${env:GOPATH}/bin/rgo_packages_driver"`)
@@ -107,8 +105,7 @@ func InitProject(c *cli.Context) error {
 
 			err = os.WriteFile(settingsFilePath, []byte(updatedContent), os.ModePerm)
 			if err != nil {
-				fmt.Printf("Failed to write updated settings.json: %v\n", err)
-				return err
+				return fmt.Errorf("Failed to write updated settings.json: %v\n", err)
 			}
 		}
 	}
