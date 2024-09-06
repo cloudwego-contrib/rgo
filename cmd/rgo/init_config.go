@@ -18,10 +18,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 
