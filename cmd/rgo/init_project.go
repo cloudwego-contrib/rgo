@@ -17,19 +17,19 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"os"
 	"path/filepath"
+	"regexp"
 
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/urfave/cli/v2"
 )
 
 const settingJson = `
 {
   "go.toolsEnvVars": {
-    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/driver"
+    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/rgo_packages_driver"
   },
   "go.enableCodeLens": {
     "runtest": false
@@ -65,16 +65,6 @@ func InitProject(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	modname := c.String("mod")
-	if modname != "" {
-		// Create the go.modname file
-		err = utils.InitGoMod(modname, workdir)
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.New("mod is required")
-	}
 	idetype := c.String("type")
 	if idetype == "" {
 		idetype = "vscode"
@@ -86,10 +76,39 @@ func InitProject(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create vscode directory: %v", err)
 		}
-		err := os.WriteFile(filepath.Join(workdir, ".vscode", "settings.json"), []byte(settingJson), os.ModePerm)
+
+		settingsFilePath := filepath.Join(workdir, ".vscode", "settings.json")
+
+		exist, err := utils.PathExist(settingsFilePath)
 		if err != nil {
-			return fmt.Errorf("failed to create vscode settings.json: %v", err)
+			return fmt.Errorf("failed to check vscode settings.json: %v", err)
 		}
+
+		if !exist {
+			err = os.WriteFile(settingsFilePath, []byte(settingJson), os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to create vscode settings.json: %v", err)
+			}
+		} else {
+			fileContent, err := os.ReadFile(settingsFilePath)
+			if err != nil {
+				fmt.Printf("Failed to read vscode settings.json: %v\n", err)
+				return err
+			}
+
+			re := regexp.MustCompile(`(?m)"go\.toolsEnvVars"\s*:\s*\{[^}]*"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`)
+
+			updatedContent := re.ReplaceAllStringFunc(string(fileContent), func(match string) string {
+				return regexp.MustCompile(`"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`).ReplaceAllString(match, `"GOPACKAGESDRIVER": "${env:GOPATH}/bin/rgo_packages_driver"`)
+			})
+
+			err = os.WriteFile(settingsFilePath, []byte(updatedContent), os.ModePerm)
+			if err != nil {
+				fmt.Printf("Failed to write updated settings.json: %v\n", err)
+				return err
+			}
+		}
+
 	}
 	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
 }
