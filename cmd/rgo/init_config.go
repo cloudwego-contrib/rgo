@@ -77,38 +77,44 @@ func InitProject(c *cli.Context) error {
 	switch idetype {
 	case consts.VSCode:
 		// Create the .vscode directory
-		err = os.MkdirAll(filepath.Join(workdir, consts.VSCodeDir), os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("failed to create vscode directory: %v", err)
-		}
-
-		settingsFilePath := filepath.Join(workdir, consts.VSCodeDir, consts.SettingsJson)
-
-		exist, err := utils.PathExist(settingsFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to check vscode settings.json: %v", err)
-		}
-
-		if !exist {
-			err = os.WriteFile(settingsFilePath, []byte(settingJson), os.ModePerm)
-			if err != nil {
-				return fmt.Errorf("failed to create vscode settings.json: %v", err)
-			}
-		} else {
-			fileContent, err := os.ReadFile(settingsFilePath)
-			if err != nil {
-				return fmt.Errorf("Failed to read vscode settings.json: %v\n", err)
-			}
-
-			updatedContent := re.ReplaceAllStringFunc(string(fileContent), func(match string) string {
-				return regexp.MustCompile(`"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`).ReplaceAllString(match, `"GOPACKAGESDRIVER": "${env:GOPATH}/bin/rgo_packages_driver"`)
-			})
-
-			err = os.WriteFile(settingsFilePath, []byte(updatedContent), os.ModePerm)
-			if err != nil {
-				return fmt.Errorf("Failed to write updated settings.json: %v\n", err)
-			}
-		}
+		return createVSCodeRGOConfig(workdir)
 	}
 	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
+}
+
+func createVSCodeRGOConfig(workdir string) error {
+	err := os.MkdirAll(filepath.Join(workdir, consts.VSCodeDir), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create vscode directory: %v", err)
+	}
+
+	settingsFilePath := filepath.Join(workdir, consts.VSCodeDir, consts.SettingsJson)
+
+	exist, err := utils.PathExist(settingsFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to check vscode settings.json: %v", err)
+	}
+
+	if !exist {
+		err = os.WriteFile(settingsFilePath, []byte(settingJson), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create vscode settings.json: %v", err)
+		}
+	} else {
+		fileContent, err := os.ReadFile(settingsFilePath)
+		if err != nil {
+			return fmt.Errorf("Failed to read vscode settings.json: %v\n", err)
+		}
+
+		updatedContent := re.ReplaceAllStringFunc(string(fileContent), func(match string) string {
+			return regexp.MustCompile(`"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`).ReplaceAllString(match, `"GOPACKAGESDRIVER": "${env:GOPATH}/bin/rgo_packages_driver"`)
+		})
+
+		err = os.WriteFile(settingsFilePath, []byte(updatedContent), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("Failed to write updated settings.json: %v\n", err)
+		}
+	}
+
+	return nil
 }
