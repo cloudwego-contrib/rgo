@@ -18,10 +18,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 
 	"github.com/urfave/cli/v2"
 )
@@ -108,7 +109,6 @@ func InitProject(c *cli.Context) error {
 				return err
 			}
 		}
-
 	}
 	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
 }
