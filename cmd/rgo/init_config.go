@@ -56,6 +56,8 @@ const settingJson = `
   "go.vetOnSave": "off"
 }`
 
+const typeFlag = "type"
+
 func InitProject(c *cli.Context) error {
 	workdir, err := os.Getwd()
 	if err != nil {
@@ -66,7 +68,7 @@ func InitProject(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	idetype := c.String("type")
+	idetype := c.String(typeFlag)
 	if idetype == "" {
 		idetype = "vscode"
 	}
