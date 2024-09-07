@@ -17,19 +17,22 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
+
 	"github.com/urfave/cli/v2"
 )
 
 const settingJson = `
 {
   "go.toolsEnvVars": {
-    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/driver"
+    "GOPACKAGESDRIVER":"${env:GOPATH}/bin/rgo_packages_driver"
   },
   "go.enableCodeLens": {
     "runtest": false
@@ -55,6 +58,8 @@ const settingJson = `
   "go.vetOnSave": "off"
 }`
 
+var re = regexp.MustCompile(`(?m)"go\.toolsEnvVars"\s*:\s*\{[^}]*"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`)
+
 func InitProject(c *cli.Context) error {
 	workdir, err := os.Getwd()
 	if err != nil {
@@ -65,31 +70,51 @@ func InitProject(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	modname := c.String("mod")
-	if modname != "" {
-		// Create the go.modname file
-		err = utils.InitGoMod(modname, workdir)
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.New("mod is required")
-	}
-	idetype := c.String("type")
+	idetype := c.String(consts.TypeFlag)
 	if idetype == "" {
-		idetype = "vscode"
+		idetype = consts.VSCode
 	}
 	switch idetype {
-	case "vscode":
+	case consts.VSCode:
 		// Create the .vscode directory
-		err = os.MkdirAll(filepath.Join(workdir, ".vscode"), os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("failed to create vscode directory: %v", err)
-		}
-		err := os.WriteFile(filepath.Join(workdir, ".vscode", "settings.json"), []byte(settingJson), os.ModePerm)
+		return createVSCodeRGOConfig(workdir)
+	}
+	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
+}
+
+func createVSCodeRGOConfig(workdir string) error {
+	err := os.MkdirAll(filepath.Join(workdir, consts.VSCodeDir), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create vscode directory: %v", err)
+	}
+
+	settingsFilePath := filepath.Join(workdir, consts.VSCodeDir, consts.SettingsJson)
+
+	exist, err := utils.PathExist(settingsFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to check vscode settings.json: %v", err)
+	}
+
+	if !exist {
+		err = os.WriteFile(settingsFilePath, []byte(settingJson), os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("failed to create vscode settings.json: %v", err)
 		}
+	} else {
+		fileContent, err := os.ReadFile(settingsFilePath)
+		if err != nil {
+			return fmt.Errorf("Failed to read vscode settings.json: %v\n", err)
+		}
+
+		updatedContent := re.ReplaceAllStringFunc(string(fileContent), func(match string) string {
+			return regexp.MustCompile(`"GOPACKAGESDRIVER"\s*:\s*"[^"]*"`).ReplaceAllString(match, `"GOPACKAGESDRIVER": "${env:GOPATH}/bin/rgo_packages_driver"`)
+		})
+
+		err = os.WriteFile(settingsFilePath, []byte(updatedContent), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("Failed to write updated settings.json: %v\n", err)
+		}
 	}
-	return os.WriteFile(filepath.Join(workdir, "rgo_config.yaml"), []byte("# "+filepath.Base(workdir)), os.ModePerm)
+
+	return nil
 }

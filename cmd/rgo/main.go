@@ -74,8 +74,7 @@ func Init() *cli.App {
 			Name:  InitName,
 			Usage: InitUsage,
 			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "mod", Usage: "project init mod", Required: true},
-				&cli.StringFlag{Name: "type", Usage: "ide type, default: vscode", DefaultText: ""},
+				&cli.StringFlag{Name: consts.TypeFlag, Usage: "ide type, default: vscode", DefaultText: consts.VSCode},
 			},
 			Action: InitProject,
 		},
@@ -101,10 +100,10 @@ Examples:
   # Clean rgo code 
   rgo clean
 `
-	InitName  = "init"
-	InitUsage = `init rgo project
+	InitName  = "init_config"
+	InitUsage = `init rgo project config
 Examples:
 	# Init rgo project
-	rgo init --mod=github.com/cloudwego/rgo
+	rgo init_config
 `
 )
