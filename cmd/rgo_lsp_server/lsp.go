@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -51,7 +50,7 @@ func init() {
 		logger = log.New(f, "", 0)
 		return
 	}
-	panic(fmt.Sprintf("logs init error: %v", *logPath))
+	panic(err)
 }
 
 func RunLspServer(cancel context.CancelFunc) {

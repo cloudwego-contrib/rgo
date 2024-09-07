@@ -48,14 +48,14 @@ func InitConfig() {
 
 	currentPath, err = utils.GetCurrentPathWithUnderline()
 	if err != nil {
-		panic("get current path failed, err:" + err.Error())
+		panic(err)
 	}
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
-		panic("read rgo_config failed:" + err.Error())
+		panic(err)
 	}
 }
 
