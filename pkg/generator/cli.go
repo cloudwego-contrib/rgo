@@ -30,7 +30,7 @@ import (
 )
 
 func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath string) error {
-	exist, err := utils.FileExistsInPath(rgoSrcPath, "go.mod")
+	exist, err := utils.FileExistsInPath(rgoSrcPath, consts.GoMod)
 	if err != nil {
 		return err
 	}

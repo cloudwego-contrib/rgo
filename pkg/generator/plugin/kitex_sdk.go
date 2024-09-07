@@ -52,7 +52,7 @@ type RGOKitexPlugin struct {
 }
 
 func (r *RGOKitexPlugin) GetName() string {
-	return "rgo"
+	return consts.RGOModuleName
 }
 
 func (r *RGOKitexPlugin) GetPluginParameters() []string {
@@ -72,7 +72,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 		}
 	}
 
-	exist, err := utils.FileExistsInPath(r.Pwd, "go.mod")
+	exist, err := utils.FileExistsInPath(r.Pwd, consts.GoMod)
 	if err != nil {
 		return &plugin.Response{
 			Error: strToPointer(err.Error()),

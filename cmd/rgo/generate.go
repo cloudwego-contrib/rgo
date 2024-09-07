@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"os"
 	"path/filepath"
 
@@ -32,9 +33,12 @@ import (
 
 var (
 	idlConfigPath string
+	currentPath   string
+	rgoBasePath   string
 
-	currentPath string
-	rgoBasePath string
+	packagePrefix string
+
+	kitexCustomArgs cli.StringSlice
 
 	c *config.RGOConfig
 )
@@ -42,16 +46,17 @@ var (
 func InitConfig() {
 	var err error
 
-	if idlConfigPath == "" {
-		idlConfigPath = consts.RGOConfigPath
-	}
-
 	currentPath, err = utils.GetCurrentPathWithUnderline()
 	if err != nil {
 		panic("get current path failed, err:" + err.Error())
 	}
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
+
+	packagePrefix = os.Getenv(consts.EnvPackagePrefix)
+	if packagePrefix == "" {
+		packagePrefix = consts.RGOModuleName
+	}
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
@@ -67,18 +72,13 @@ func GenerateRGOCode() error {
 		return err
 	}
 
-	modulePaths, err := utils.FindGoModDirectories(wd)
-	if err != nil {
-		return err
-	}
-
-	exist, err := utils.FileExistsInPath(wd, "go.work")
+	exist, err := utils.FileExistsInPath(wd, consts.GoWork)
 	if err != nil {
 		return err
 	}
 
 	if !exist {
-		err = utils.InitGoWork(modulePaths...)
+		err = utils.InitGoWork()
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func GenerateRGOCode() error {
 					return err
 				}
 
-				err = generateKitexGen(path, filepath.Join("rgo", c.IDLs[k].FormatServiceName), idlPath, rgoPlugin)
+				err = generateKitexGen(path, filepath.Join(packagePrefix, c.IDLs[k].FormatServiceName), idlPath, kitexCustomArgs.Value(), rgoPlugin)
 				if err != nil {
 					return fmt.Errorf("failed to generate rgo code:%v", err)
 				}
@@ -116,8 +116,8 @@ func GenerateRGOCode() error {
 	return nil
 }
 
-func generateKitexGen(wd, module, idlPath string, plugins ...plugin.SDKPlugin) error {
-	err := sdk.RunKitexTool(wd, plugins, "--module", module, idlPath)
+func generateKitexGen(wd, module, idlPath string, customArgs []string, plugins ...plugin.SDKPlugin) error {
+	err := sdk.RunKitexTool(wd, plugins, append(customArgs, "--module", module, idlPath)...)
 	if err != nil {
 		return err
 	}

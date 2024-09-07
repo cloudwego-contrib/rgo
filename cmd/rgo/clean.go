@@ -32,7 +32,7 @@ func Clean() error {
 		return err
 	}
 
-	exist, err := utils.FileExistsInPath(wd, "go.work")
+	exist, err := utils.FileExistsInPath(wd, consts.GoWork)
 	if err != nil {
 		return err
 	}
@@ -63,13 +63,13 @@ func Clean() error {
 		return err
 	}
 
-	goWork, err := utils.GetGoWork()
+	goWork, err := utils.GetGoWorkJson()
 	if err != nil {
 		return err
 	}
 
 	if len(goWork.Use) <= 1 {
-		err = os.RemoveAll(filepath.Join(wd, "go.work"))
+		err = os.RemoveAll(filepath.Join(wd, consts.GoWork))
 		if err != nil {
 			return err
 		}

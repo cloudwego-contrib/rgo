@@ -30,3 +30,12 @@ const (
 const (
 	RGOModuleName = "rgo"
 )
+
+const (
+	GoMod  = "go.mod"
+	GoWork = "go.work"
+)
+
+const (
+	EnvPackagePrefix = "RGO_PACKAGE_PREFIX"
+)

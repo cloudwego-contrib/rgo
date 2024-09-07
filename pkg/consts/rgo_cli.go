@@ -17,7 +17,9 @@
 package consts
 
 const (
-	TypeFlag = "type"
+	TypeFlag      = "type"
+	ConfigFlag    = "config"
+	KitexArgsFlag = "kitex_args"
 )
 
 const (

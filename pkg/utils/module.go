@@ -48,8 +48,7 @@ func InitGoMod(moduleName, path string) error {
 }
 
 func InitGoWork(modules ...string) error {
-	args := append([]string{"work", "init"}, modules...)
-	cmd := exec.Command("go", args...)
+	cmd := exec.Command("go", append([]string{"work", "init"}, modules...)...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -87,7 +86,7 @@ func RemoveModulesFromGoWork(modulesToRemove []string) error {
 	return nil
 }
 
-func GetGoWork() (*config.GoWork, error) {
+func GetGoWorkJson() (*config.GoWork, error) {
 	cmd := exec.Command("go", "work", "edit", "-json")
 
 	output, err := cmd.CombinedOutput()
