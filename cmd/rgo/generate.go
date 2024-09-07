@@ -18,9 +18,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
