@@ -44,7 +44,7 @@ func init() {
 
 	currentPath, err := utils.GetCurrentPathWithUnderline()
 	if err != nil {
-		panic("get current path failed, err:" + err.Error())
+		panic(err)
 	}
 
 	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)

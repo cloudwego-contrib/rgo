@@ -91,7 +91,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 	rg.wg.Wait()
 
 	if err := g.Wait(); err != nil {
-		rlog.Error(fmt.Sprintf("Failed to process all idl repos: %v", err))
+		rlog.Errorf("Failed to process all idl repos: %v", err)
 	}
 }
 
@@ -100,28 +100,28 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
-		rlog.Error(fmt.Sprintf("Failed to check if path %s exists: %v", filePath, err))
+		rlog.Errorf("Failed to check if path %s exists: %v", filePath, err)
 		return
 	}
 
 	if !exist {
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
-			rlog.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
+			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 			return
 		}
 		changedRepoCommit[repo.RepoName] = commit
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
-			rlog.Error(fmt.Sprintf("Failed to get latest commit id for %s: %v", repo, err))
+			rlog.Errorf("Failed to get latest commit id for %s: %v", repo, err)
 			return
 		}
 
 		if id != repo.Commit {
 			commit, err := rg.updateRemoteRepo(repo, filePath, repo.Commit)
 			if err != nil {
-				rlog.Error(fmt.Sprintf("Failed to clone or update repository %s: %v", repo, err))
+				rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 				return
 			}
 			changedRepoCommit[repo.RepoName] = commit
@@ -147,7 +147,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		err := rg.GenerateRGOCode(idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
-			rlog.Error(fmt.Sprintf("Failed to generate rgo code for %s: %v", idl.ServiceName, err))
+			rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
 		}
 
 	}
@@ -190,7 +190,7 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			rlog.Error(fmt.Sprintf("Failed to update commit for %s: %v", repoName, r))
+			rlog.Errorf("Failed to update commit for %s: %v", repoName, r)
 		}
 	}()
 
