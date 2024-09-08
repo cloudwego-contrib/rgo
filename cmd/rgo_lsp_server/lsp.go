@@ -18,10 +18,11 @@ package main
 
 import (
 	"context"
-	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"io"
 	"log"
 	"os"
+
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
 	"github.com/TobiasYin/go-lsp/logs"
 	"github.com/TobiasYin/go-lsp/lsp"
@@ -40,7 +41,7 @@ func init() {
 		logger = log.New(os.Stderr, consts.LogPrefix, 0)
 		return
 	}
-	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 	if err != nil {
 		panic(err)
 	}
