@@ -17,30 +17,10 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
-
-func GetDefaultUserPath() string {
-	var homeDir string
-	switch runtime.GOOS {
-	case "windows":
-		homeDir = os.Getenv("USERPROFILE")
-	case "darwin":
-		homeDir = os.Getenv("HOME")
-	case "linux":
-		homeDir = os.Getenv("HOME")
-	default:
-		log.Fatalf("Unsupported OS: %s", runtime.GOOS)
-	}
-	if homeDir == "" {
-		log.Fatal("Cannot get user home directory")
-	}
-	return homeDir
-}
 
 // PathExist is used to judge whether the path exists in file system.
 func PathExist(path string) (bool, error) {
@@ -79,24 +59,4 @@ func GetFileNameWithoutExt(filePath string) string {
 	base := filepath.Base(filePath)
 	nameWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
 	return nameWithoutExt
-}
-
-func GetCurrentPathWithUnderline() (string, error) {
-	currentPath, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	switch runtime.GOOS {
-	case "windows":
-		currentPath = strings.ReplaceAll(currentPath, ":", "")
-		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
-	default: // Unix-like systems
-		currentPath = strings.TrimSpace(currentPath)
-
-		strings.TrimPrefix(currentPath, "/")
-		currentPath = strings.ReplaceAll(currentPath, "/", "_")
-	}
-
-	return currentPath, nil
 }
