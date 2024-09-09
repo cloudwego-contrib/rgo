@@ -17,13 +17,25 @@
 package consts
 
 const (
-	TypeFlag      = "type"
-	ConfigFlag    = "config"
-	KitexArgsFlag = "kitex_args"
+	RGOConfigPath = "./rgo_config.yaml"
+
+	RGOBasePath = ".rgo/cache"
+	IDLPath     = "idl"
+	LogPath     = "log"
+	RepoPath    = "repo"
+	PkgMetaPath = "pkg_meta"
+	BuildPath   = "build"
 )
 
 const (
-	VSCode       = "vscode"
-	VSCodeDir    = ".vscode"
-	SettingsJson = "settings.json"
+	RGOModuleName = "rgo"
+)
+
+const (
+	GoMod  = "go.mod"
+	GoWork = "go.work"
+)
+
+const (
+	EnvPackagePrefix = "RGO_PACKAGE_PREFIX"
 )

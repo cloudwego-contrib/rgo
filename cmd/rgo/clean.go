@@ -32,7 +32,7 @@ func Clean() error {
 		return err
 	}
 
-	exist, err := utils.FileExistsInPath(wd, "go.work")
+	exist, err := utils.FileExistsInPath(wd, consts.GoWork)
 	if err != nil {
 		return err
 	}
@@ -52,10 +52,28 @@ func Clean() error {
 
 				removeModulePaths = append(removeModulePaths, path)
 
+				// Remove the IDL from the config, prevent duplicate matching
 				c.IDLs = append(c.IDLs[:k], c.IDLs[k+1:]...)
 			}
 		}
 	}
 
-	return utils.RemoveModulesFromGoWork(filepath.Join(wd, "go.work"), removeModulePaths)
+	err = utils.RemoveModulesFromGoWork(removeModulePaths)
+	if err != nil {
+		return err
+	}
+
+	goWork, err := utils.GetGoWorkJson()
+	if err != nil {
+		return err
+	}
+
+	if len(goWork.Use) <= 1 {
+		err = os.RemoveAll(filepath.Join(wd, consts.GoWork))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -20,27 +20,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
-
-func GetDefaultUserPath() string {
-	var homeDir string
-	switch runtime.GOOS {
-	case "windows":
-		homeDir = os.Getenv("USERPROFILE")
-	case "darwin":
-		homeDir = os.Getenv("HOME")
-	case "linux":
-		homeDir = os.Getenv("HOME")
-	default:
-		log.Fatalf("Unsupported OS: %s", runtime.GOOS)
-	}
-	if homeDir == "" {
-		log.Fatal("Cannot get user home directory")
-	}
-	return homeDir
-}
 
 // PathExist is used to judge whether the path exists in file system.
 func PathExist(path string) (bool, error) {
@@ -87,35 +68,18 @@ func GetCurrentPathWithUnderline() (string, error) {
 		return "", err
 	}
 
-	// Windows
-	if strings.HasPrefix(currentPath, "\\") || strings.Contains(currentPath, ":\\") {
-		currentPath = strings.ReplaceAll(currentPath, ":", "")
-		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
-	} else {
-		// Unix
-		currentPath = strings.TrimSpace(currentPath)
-		currentPath = currentPath[1:]
-		currentPath = strings.ReplaceAll(currentPath, "/", "_")
-	}
+	currentPath = strings.TrimSpace(currentPath)
+
+	strings.TrimPrefix(currentPath, "/")
+	currentPath = strings.ReplaceAll(currentPath, "/", "_")
 
 	return currentPath, nil
 }
 
-func FindGoModDirectories(root string) ([]string, error) {
-	var goModDirs []string
-
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.Name() == "go.mod" {
-			dir := filepath.Dir(path)
-			goModDirs = append(goModDirs, dir)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+func GetDefaultUserPath() string {
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		log.Fatal("Cannot get user home directory")
 	}
-	return goModDirs, nil
+	return homeDir
 }

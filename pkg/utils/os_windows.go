@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-package consts
+package utils
 
-const (
-	TypeFlag      = "type"
-	ConfigFlag    = "config"
-	KitexArgsFlag = "kitex_args"
-)
+func GetCurrentPathWithUnderline() (string, error) {
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
 
-const (
-	VSCode       = "vscode"
-	VSCodeDir    = ".vscode"
-	SettingsJson = "settings.json"
-)
+	// Windows-specific path transformation
+	currentPath = strings.ReplaceAll(currentPath, ":", "")
+	currentPath = strings.ReplaceAll(currentPath, "\\", "_")
+
+	return currentPath, nil
+}
+
+func GetDefaultUserPath() string {
+	homeDir := os.Getenv("USERPROFILE")
+	if homeDir == "" {
+		log.Fatal("Cannot get user home directory")
+	}
+	return homeDir
+}

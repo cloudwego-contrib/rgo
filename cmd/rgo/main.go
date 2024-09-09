@@ -56,7 +56,8 @@ func Init() *cli.App {
 			Name:  GenerateName,
 			Usage: GenerateUsage,
 			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "config,c", Usage: "rgo_config file path", Destination: &idlConfigPath, DefaultText: consts.RGOConfigPath},
+				&cli.StringFlag{Name: consts.ConfigFlag, Aliases: []string{"c"}, Usage: "rgo_config file path, default: ./rgo_config.yaml", Destination: &idlConfigPath, Value: consts.RGOConfigPath},
+				&cli.StringSliceFlag{Name: consts.KitexArgsFlag, Aliases: []string{"k"}, Usage: "kitex custom args", Destination: &kitexCustomArgs},
 			},
 			Action: func(c *cli.Context) error {
 				return GenerateRGOCode()
@@ -74,7 +75,7 @@ func Init() *cli.App {
 			Name:  InitName,
 			Usage: InitUsage,
 			Flags: []cli.Flag{
-				&cli.StringFlag{Name: consts.TypeFlag, Usage: "ide type, default: vscode", DefaultText: consts.VSCode},
+				&cli.StringFlag{Name: consts.TypeFlag, Aliases: []string{"t"}, Usage: "ide type, default: vscode", Value: consts.VSCode},
 			},
 			Action: InitProject,
 		},

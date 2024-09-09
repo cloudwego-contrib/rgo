@@ -17,11 +17,12 @@
 package utils
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/config"
 )
 
 func InitGoMod(moduleName, path string) error {
@@ -47,8 +48,7 @@ func InitGoMod(moduleName, path string) error {
 }
 
 func InitGoWork(modules ...string) error {
-	args := append([]string{"work", "init"}, modules...)
-	cmd := exec.Command("go", args...)
+	cmd := exec.Command("go", append([]string{"work", "init"}, modules...)...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -61,8 +61,7 @@ func InitGoWork(modules ...string) error {
 }
 
 func AddModuleToGoWork(modules ...string) error {
-	args := append([]string{"work", "use"}, modules...)
-	cmd := exec.Command("go", args...)
+	cmd := exec.Command("go", append([]string{"work", "use"}, modules...)...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -74,53 +73,33 @@ func AddModuleToGoWork(modules ...string) error {
 	return RunGoWorkSync()
 }
 
-func RemoveModulesFromGoWork(workFilePath string, modulesToRemove []string) error {
-	// Read the go.work file content
-	file, err := os.Open(workFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to open go.work: %v", err)
-	}
-	defer file.Close()
+func RemoveModulesFromGoWork(modulesToRemove []string) error {
+	for _, mod := range modulesToRemove {
+		cmd := exec.Command("go", "work", "edit", "-dropuse", mod)
 
-	var lines []string
-	scanner := bufio.NewScanner(file)
-
-	// Store each line that doesn't contain the module path to remove
-	for scanner.Scan() {
-		line := scanner.Text()
-		shouldRemove := false
-
-		for _, module := range modulesToRemove {
-			if strings.Contains(line, module) {
-				shouldRemove = true
-				break
-			}
-		}
-
-		if !shouldRemove {
-			lines = append(lines, line)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error reading go.work: %v", err)
-	}
-
-	// Write the updated content back to the go.work file
-	file, err = os.Create(workFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to create go.work: %v", err)
-	}
-	defer file.Close()
-
-	for _, line := range lines {
-		_, err = file.WriteString(line + "\n")
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("error writing to go.work: %v", err)
+			return fmt.Errorf("failed to execute 'go work edit -dropuse': %v, output: %s", err, string(output))
 		}
 	}
 
-	return RunGoWorkSync()
+	return nil
+}
+
+func GetGoWorkJson() (*config.GoWork, error) {
+	cmd := exec.Command("go", "work", "edit", "-json")
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute 'go work list -json': %v, output: %s", err, string(output))
+	}
+
+	var goWork *config.GoWork
+	if err := json.Unmarshal(output, &goWork); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %v", err)
+	}
+
+	return goWork, nil
 }
 
 func RunGoWorkSync() error {

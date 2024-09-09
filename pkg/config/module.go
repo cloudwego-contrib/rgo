@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package consts
+package config
 
-const (
-	RGOConfigPath = "./rgo_config.yaml"
+type GoWork struct {
+	Go  string     `json:"Go"`
+	Use []UseEntry `json:"Use"`
+}
 
-	RGOBasePath = ".rgo/cache"
-	IDLPath     = "idl"
-	LogPath     = "log"
-	RepoPath    = "repo"
-	PkgMetaPath = "pkg_meta"
-	BuildPath   = "build"
-)
-
-const (
-	RGOModuleName = "rgo"
-)
+type UseEntry struct {
+	DiskPath string `json:"DiskPath"`
+}
