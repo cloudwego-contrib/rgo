@@ -47,7 +47,7 @@ var (
 func InitConfig() {
 	var err error
 
-	currentPath, err = utils.GetCurrentPathWithUnderline()
+	currentPath, err = utils.GetProjectHashPathWithUnderline()
 	if err != nil {
 		panic(err)
 	}

@@ -21,7 +21,12 @@ import "context"
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go RGORun(ctx)
+	app, err := NewApp()
+	if err != nil {
+		panic(err)
+	}
+
+	go app.Run(ctx)
 
 	RunLspServer(cancel)
 }

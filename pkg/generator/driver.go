@@ -26,7 +26,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func (rg *RGOGenerator) generateRGOPackages(formatServiceName, path string) error {
+func (rg *RGOGenerator) generatePackagesMeta(formatServiceName, path string) error {
 	cfg := &packages.Config{
 		Mode: packages.NeedName |
 			packages.NeedFiles |

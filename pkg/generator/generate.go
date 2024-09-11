@@ -18,16 +18,14 @@ package generator
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 )
@@ -41,9 +39,8 @@ type RGOGenerator struct {
 
 func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	return &RGOGenerator{
-		RGOBasePath:       rgoBasePath,
-		rgoConfig:         rgoConfig,
-		changedRepoCommit: make(map[string]string),
+		RGOBasePath: rgoBasePath,
+		rgoConfig:   rgoConfig,
 	}
 }
 
@@ -59,48 +56,49 @@ func (rg *RGOGenerator) Run() {
 }
 
 func (rg *RGOGenerator) generateRepoCode() {
-	changedRepoCommit := rg.changedRepoCommit
-
+	modifiedCommits := make([][2]string, 0)
 	idlRepos := rg.rgoConfig.IDLRepos
 
-	// create errgroup
 	g, ctx := errgroup.WithContext(context.Background())
 
-	// create a gopool pool and limit the number of concurrent calls
-	pool, _ := ants.NewPoolWithFunc(10, func(repo interface{}) {
-		defer rg.wg.Done()
-		rg.processRepo(repo.(config.IDLRepo), changedRepoCommit)
-	})
-	defer pool.Release()
-
-	// traverse each idl repo and submit the task to gopool
 	for _, repo := range idlRepos {
-		repo := repo
-		rg.wg.Add(1)
+		g.Go(func(repo config.IDLRepo) func() error {
+			return func() error {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
 
-		g.Go(func() error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				return pool.Invoke(repo)
+				rg.processRepo(repo, modifiedCommits)
+				return nil
 			}
-		})
+		}(repo))
 	}
-
-	rg.wg.Wait()
 
 	if err := g.Wait(); err != nil {
 		rlog.Errorf("Failed to process all idl repos: %v", err)
 	}
+
+	for _, v := range modifiedCommits {
+		rg.changedRepoCommit[v[0]] = v[1]
+	}
 }
 
-func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[string]string) {
+func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]string) {
 	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, repo.RepoName)
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
 		rlog.Errorf("Failed to check if path %s exists: %v", filePath, err)
+		return
+	}
+
+	if repo.Commit == "" {
+		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
+		if err != nil {
+			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
+			return
+		}
+		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
 		return
 	}
 
@@ -110,7 +108,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 			return
 		}
-		changedRepoCommit[repo.RepoName] = commit
+		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
@@ -124,7 +122,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[s
 				rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 				return
 			}
-			changedRepoCommit[repo.RepoName] = commit
+			modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
 		}
 	}
 }
@@ -137,11 +135,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
 			continue
 		}
-		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
-
-		commit := changedRepoCommit[idl.RepoName]
-
-		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
+		srcPath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
@@ -190,7 +184,8 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			rlog.Errorf("Failed to update commit for %s: %v", repoName, r)
+			stackTrace := string(debug.Stack())
+			rlog.Errorf("Failed to update commit for %s: %v\nStack Trace:\n%s", repoName, r, stackTrace)
 		}
 	}()
 

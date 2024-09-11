@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
@@ -30,60 +31,84 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
+type App struct {
 	idlConfigPath string
+	rgoBasePath   string
+	config        *config.RGOConfig
+	generator     *generator.RGOGenerator
+	isRunning     chan struct{} // judge whether the app is running
+}
 
-	c *config.RGOConfig
-	g *generator.RGOGenerator
-)
+func NewApp() (*App, error) {
+	idlConfigPath := consts.RGOConfigPath
 
-func init() {
-	idlConfigPath = consts.RGOConfigPath
-
-	var err error
-
-	currentPath, err := utils.GetCurrentPathWithUnderline()
+	currentPath, err := utils.GetProjectHashPathWithUnderline()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
 	rlog.InitLogger(rgoBasePath)
 
-	c, err = config.ReadConfig(idlConfigPath)
+	c, err := config.ReadConfig(idlConfigPath)
 	if err != nil {
 		rlog.Warn("read rgo_config failed", zap.Error(err))
 	}
 
-	g = generator.NewRGOGenerator(c, rgoBasePath)
+	g := generator.NewRGOGenerator(c, rgoBasePath)
+
+	return &App{
+		idlConfigPath: idlConfigPath,
+		rgoBasePath:   rgoBasePath,
+		config:        c,
+		generator:     g,
+	}, nil
 }
 
-func RGORun(ctx context.Context) {
-	go WatchConfig(g, ctx)
+func (app *App) Run(ctx context.Context) {
+	app.isRunning <- struct{}{}
+	defer func() {
+		<-app.isRunning
+	}()
 
-	g.Run()
+	go app.WatchConfig(ctx)
+
+	app.generator.Run()
 }
 
-func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
+func (app *App) WatchConfig(ctx context.Context) {
 	viper.WatchConfig()
 
-	// hook function for config file change
-	config.ConfigChangeHandler = func(e fsnotify.Event) {
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		select {
+		case app.isRunning <- struct{}{}:
+			defer func() {
+				<-app.isRunning
+			}()
+		default:
+			rlog.Warn("A config change is already being processed, skipping this event.")
+			return
+		}
+
+		defer func() {
+			if r := recover(); r != nil {
+				stackTrace := string(debug.Stack())
+				rlog.Error("Recovered from panic in ConfigChangeHandler", zap.Any("error", r), zap.String("stack_trace", stackTrace))
+			}
+		}()
+
 		viper.Reset()
-		c, err := config.ReadConfig(idlConfigPath)
+		c, err := config.ReadConfig(app.idlConfigPath)
 		if err != nil {
 			rlog.Error("read rgo_config failed", zap.Error(err))
+			return
 		}
 
 		rlog.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
 
-		g := generator.NewRGOGenerator(c, g.RGOBasePath)
-
-		g.Run()
-	}
-
-	viper.OnConfigChange(config.ConfigChangeHandler)
+		generator.NewRGOGenerator(c, app.rgoBasePath).Run()
+	})
 
 	<-ctx.Done()
 }

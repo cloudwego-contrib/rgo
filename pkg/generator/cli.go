@@ -50,15 +50,13 @@ func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath s
 	fileType := filepath.Ext(idlPath)
 
 	switch fileType {
-	case ".thrift":
+	case consts.ThriftPostfix:
 		err = rg.GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
 
-		return rg.generateRGOPackages(formatServiceName, rgoSrcPath)
-	case ".proto":
-		return nil
+		return rg.generatePackagesMeta(formatServiceName, rgoSrcPath)
 	default:
 		return errors.New("unsupported idl file")
 	}
