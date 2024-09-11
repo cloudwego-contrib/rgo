@@ -17,7 +17,6 @@
 package generator
 
 import (
-	"context"
 	"path/filepath"
 	"runtime/debug"
 	"sync"
@@ -50,6 +49,13 @@ type Gen interface {
 }
 
 func (rg *RGOGenerator) Run() {
+	defer func() {
+		if r := recover(); r != nil {
+			stackTrace := string(debug.Stack())
+			rlog.Errorf("Failed to run rgo: %v\nStack Trace:\n%s", r, stackTrace)
+		}
+	}()
+
 	rg.generateRepoCode()
 
 	rg.generateSrcCode()
@@ -59,23 +65,19 @@ func (rg *RGOGenerator) generateRepoCode() {
 	modifiedCommits := make([][2]string, 0)
 	idlRepos := rg.rgoConfig.IDLRepos
 
-	g, ctx := errgroup.WithContext(context.Background())
+	var eg errgroup.Group
 
 	for _, repo := range idlRepos {
-		g.Go(func(repo config.IDLRepo) func() error {
+		eg.Go(func(repo config.IDLRepo) func() error {
 			return func() error {
-				if ctx.Err() != nil {
-					return ctx.Err()
-				}
-
-				rg.processRepo(repo, modifiedCommits)
-				return nil
+				return rg.processRepo(repo, modifiedCommits)
 			}
 		}(repo))
 	}
 
-	if err := g.Wait(); err != nil {
+	if err := eg.Wait(); err != nil {
 		rlog.Errorf("Failed to process all idl repos: %v", err)
+		return
 	}
 
 	for _, v := range modifiedCommits {
@@ -83,48 +85,49 @@ func (rg *RGOGenerator) generateRepoCode() {
 	}
 }
 
-func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]string) {
+func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]string) error {
 	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, repo.RepoName)
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
 		rlog.Errorf("Failed to check if path %s exists: %v", filePath, err)
-		return
+		return err
 	}
 
 	if repo.Commit == "" {
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
-			return
+			return err
 		}
 		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
-		return
+		return nil
 	}
 
 	if !exist {
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
-			return
+			return err
 		}
 		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
 			rlog.Errorf("Failed to get latest commit id for %s: %v", repo, err)
-			return
+			return nil
 		}
 
 		if id != repo.Commit {
 			commit, err := rg.updateRemoteRepo(repo, filePath, repo.Commit)
 			if err != nil {
 				rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
-				return
+				return err
 			}
 			modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
 		}
 	}
+	return nil
 }
 
 func (rg *RGOGenerator) generateSrcCode() {
@@ -182,13 +185,6 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 }
 
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-			rlog.Errorf("Failed to update commit for %s: %v\nStack Trace:\n%s", repoName, r, stackTrace)
-		}
-	}()
-
 	repos := viper.Get("idl_repos").([]interface{})
 	var res []config.IDLRepo
 

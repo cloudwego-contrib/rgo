@@ -58,7 +58,7 @@ func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath s
 
 		return rg.generatePackagesMeta(formatServiceName, rgoSrcPath)
 	default:
-		return errors.New("unsupported idl file")
+		return errors.New("unsupported idl file: " + fileType)
 	}
 }
 

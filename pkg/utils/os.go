@@ -79,7 +79,7 @@ func GetProjectHashPathWithUnderline() (string, error) {
 	hasher.Write([]byte(currentPath))
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
-	hashedPath := fmt.Sprintf("%s_%s", hash, projectName)
+	hashedPath := fmt.Sprintf("%s_%s", projectName, hash)
 
 	return hashedPath, nil
 }
