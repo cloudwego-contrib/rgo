@@ -20,13 +20,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/consts"
-	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 
