@@ -17,9 +17,5 @@
 package consts
 
 const (
-	LSPLogPathEnv = "RGO_LSP_LOG_PATH"
-)
-
-const (
-	RGOLsp = "rgo_lsp"
+	RGOPackagesDriver = "rgo_packages_driver"
 )

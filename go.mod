@@ -7,7 +7,6 @@ require (
 	github.com/cloudwego/kitex v0.10.3
 	github.com/cloudwego/thriftgo v0.3.15
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/spf13/viper v1.15.0
 	github.com/urfave/cli/v2 v2.23.0
 	go.uber.org/zap v1.21.0

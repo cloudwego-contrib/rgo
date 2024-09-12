@@ -20,8 +20,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -82,7 +83,7 @@ func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string
 }
 
 func init() {
-	curWorkPath, err := utils.GetCurrentPathWithUnderline()
+	curWorkPath, err := utils.GetProjectHashPathWithUnderline()
 	if err != nil {
 		panic(err)
 	}
@@ -93,6 +94,8 @@ func init() {
 func main() {
 	ctx, cancel := signalContext(context.Background(), os.Interrupt)
 	defer cancel()
+
+	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOPackagesDriver))
 
 	if err := run(ctx, os.Stdin, os.Stdout, os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err)
@@ -110,8 +113,9 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 	)
 
 	req := &DriverRequest{}
-	if err := json.NewDecoder(in).Decode(&req); err != nil {
-		return fmt.Errorf("unable to decode driver request: %w", err)
+	if err = json.NewDecoder(in).Decode(&req); err != nil {
+		rlog.Errorf("unable to decode driver request: %v", err)
+		return err
 	}
 
 	for k := len(req.Env) - 1; k >= 0; k-- {
@@ -132,7 +136,8 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	ret, b, err := internal.UnsafeGetDefaultDriverResponse(cfg, args...)
 	if err != nil || b {
-		return fmt.Errorf("failed to get default driver response: %v", err)
+		rlog.Errorf("failed to get default driver response: %v", err)
+		return err
 	}
 
 	for k := len(ret.Packages) - 1; k >= 0; k-- {
@@ -145,7 +150,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	targetPkgs, err = getTargetPackages(targetPath)
 	if err != nil {
-		log.Printf("Error getting target packages from path %s: %v", targetPath, err)
+		rlog.Warnf("error getting target packages from path %s: %v", targetPath, err)
 	}
 
 	for _, pkg := range targetPkgs {
@@ -160,7 +165,8 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	data, err := json.Marshal(ret)
 	if err != nil {
-		return fmt.Errorf("json marshal error: %v", err.Error())
+		rlog.Errorf("json marshal error: %v", err.Error())
+		return err
 	}
 
 	_, err = out.Write(data)

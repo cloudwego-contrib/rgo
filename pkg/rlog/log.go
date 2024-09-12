@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -29,9 +28,9 @@ import (
 
 var logger *zap.Logger
 
-func InitLogger(rgoBasePath string) {
+func InitLogger(logPath string) {
 	currentTime := time.Now().Format("2006-01-02")
-	logFileName := filepath.Join(rgoBasePath, consts.LogPath, fmt.Sprintf("%s.log", currentTime))
+	logFileName := filepath.Join(logPath, fmt.Sprintf("%s.log", currentTime))
 
 	lumberjackLogger := &lumberjack.Logger{
 		Filename:   logFileName,
