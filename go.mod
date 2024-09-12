@@ -1,6 +1,6 @@
 module github.com/cloudwego-contrib/rgo
 
-go 1.19
+go 1.17
 
 require (
 	github.com/TobiasYin/go-lsp v0.0.0-20231106040121-c84e66f01aa4
@@ -13,7 +13,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/text v0.13.0
-	golang.org/x/tools v0.20.0
+	golang.org/x/tools v0.19.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
