@@ -151,7 +151,7 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	targetPkgs, err = getTargetPackages(targetPath)
 	if err != nil {
-		rlog.Warnf("error getting target packages from path %s: %v", targetPath, err)
+		rlog.Warnf("unable get target packages from path %s: %v", targetPath, err)
 	}
 
 	for _, pkg := range targetPkgs {
