@@ -89,13 +89,6 @@ func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 			return
 		}
 
-		defer func() {
-			if r := recover(); r != nil {
-				stackTrace := string(debug.Stack())
-				rlog.Error("Recovered from panic in ConfigChangeHandler", zap.Any("error", r), zap.String("stack_trace", stackTrace))
-			}
-		}()
-
 		viper.Reset()
 		c, err := config.ReadConfig(consts.RGOConfigPath)
 		if err != nil {
