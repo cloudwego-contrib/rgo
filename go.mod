@@ -1,6 +1,6 @@
 module github.com/cloudwego-contrib/rgo
 
-go 1.17
+go 1.19
 
 require (
 	github.com/TobiasYin/go-lsp v0.0.0-20231106040121-c84e66f01aa4
