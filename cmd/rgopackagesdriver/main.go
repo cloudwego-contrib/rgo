@@ -149,8 +149,9 @@ func run(ctx context.Context, in io.Reader, out io.Writer, args []string) error 
 
 	for _, pkg := range targetPkgs {
 		ret.Roots = append(ret.Roots, pkg.ID)
-		ret.Packages = append(ret.Packages, pkg)
 	}
+
+	ret.Packages = append(targetPkgs, ret.Packages...)
 
 	var loader DefaultPackageLoader
 	loader.Ret = ret
