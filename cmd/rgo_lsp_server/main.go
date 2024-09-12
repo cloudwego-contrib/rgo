@@ -16,12 +16,26 @@
 
 package main
 
-import "context"
+import (
+	"context"
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
+	"go.uber.org/zap"
+	"runtime/debug"
+)
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go RGORun(ctx)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				stackTrace := string(debug.Stack())
+				rlog.Error("Recovered from panic in RGORun", zap.Any("error", r), zap.String("stack_trace", stackTrace))
+			}
+		}()
+
+		RGORun(ctx)
+	}()
 
 	RunLspServer(cancel)
 }

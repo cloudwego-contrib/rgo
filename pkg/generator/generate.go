@@ -17,29 +17,28 @@
 package generator
 
 import (
-	"path/filepath"
-	"runtime/debug"
-	"sync"
-
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
+	"path/filepath"
+	"runtime/debug"
+	"sync"
 )
 
 type RGOGenerator struct {
 	RGOBasePath       string
 	rgoConfig         *config.RGOConfig
-	changedRepoCommit map[string]string
-	wg                sync.WaitGroup
+	changedRepoCommit *sync.Map
 }
 
 func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	return &RGOGenerator{
-		RGOBasePath: rgoBasePath,
-		rgoConfig:   rgoConfig,
+		RGOBasePath:       rgoBasePath,
+		rgoConfig:         rgoConfig,
+		changedRepoCommit: &sync.Map{},
 	}
 }
 
@@ -62,7 +61,6 @@ func (rg *RGOGenerator) Run() {
 }
 
 func (rg *RGOGenerator) generateRepoCode() {
-	modifiedCommits := make([][2]string, 0)
 	idlRepos := rg.rgoConfig.IDLRepos
 
 	var eg errgroup.Group
@@ -70,7 +68,7 @@ func (rg *RGOGenerator) generateRepoCode() {
 	for _, repo := range idlRepos {
 		eg.Go(func(repo config.IDLRepo) func() error {
 			return func() error {
-				return rg.processRepo(repo, modifiedCommits)
+				return rg.processRepo(repo, rg.changedRepoCommit)
 			}
 		}(repo))
 	}
@@ -79,13 +77,9 @@ func (rg *RGOGenerator) generateRepoCode() {
 		rlog.Errorf("Failed to process all idl repos: %v", err)
 		return
 	}
-
-	for _, v := range modifiedCommits {
-		rg.changedRepoCommit[v[0]] = v[1]
-	}
 }
 
-func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]string) error {
+func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit *sync.Map) error {
 	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, repo.RepoName)
 
 	exist, err := utils.PathExist(filePath)
@@ -100,7 +94,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]st
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 			return err
 		}
-		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
+		changedRepoCommit.Store(repo.RepoName, commit)
 		return nil
 	}
 
@@ -110,7 +104,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]st
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 			return err
 		}
-		modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
+		changedRepoCommit.Store(repo.RepoName, commit)
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
@@ -124,7 +118,7 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, modifiedCommits [][2]st
 				rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
 				return err
 			}
-			modifiedCommits = append(modifiedCommits, [2]string{repo.RepoName, commit})
+			changedRepoCommit.Store(repo.RepoName, commit)
 		}
 	}
 	return nil
@@ -135,7 +129,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
-		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
+		if _, ok := changedRepoCommit.Load(idl.RepoName); !ok {
 			continue
 		}
 		srcPath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
