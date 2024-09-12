@@ -20,13 +20,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"io"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 
 	"github.com/cloudwego-contrib/rgo/cmd/rgopackagesdriver/internal"
 	"golang.org/x/tools/go/packages"
