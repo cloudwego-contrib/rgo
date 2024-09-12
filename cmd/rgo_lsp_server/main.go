@@ -18,9 +18,10 @@ package main
 
 import (
 	"context"
+	"runtime/debug"
+
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"go.uber.org/zap"
-	"runtime/debug"
 )
 
 func main() {

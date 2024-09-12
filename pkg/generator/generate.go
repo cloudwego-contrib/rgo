@@ -17,15 +17,16 @@
 package generator
 
 import (
+	"path/filepath"
+	"runtime/debug"
+	"sync"
+
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
-	"path/filepath"
-	"runtime/debug"
-	"sync"
 )
 
 type RGOGenerator struct {
