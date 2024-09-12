@@ -17,6 +17,9 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -62,7 +65,7 @@ func GetFileNameWithoutExt(filePath string) string {
 	return nameWithoutExt
 }
 
-func GetCurrentPathWithUnderline() (string, error) {
+func GetProjectHashPathWithUnderline() (string, error) {
 	currentPath, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -70,10 +73,15 @@ func GetCurrentPathWithUnderline() (string, error) {
 
 	currentPath = strings.TrimSpace(currentPath)
 
-	strings.TrimPrefix(currentPath, "/")
-	currentPath = strings.ReplaceAll(currentPath, "/", "_")
+	projectName := filepath.Base(currentPath)
 
-	return currentPath, nil
+	hasher := sha256.New()
+	hasher.Write([]byte(currentPath))
+	hash := hex.EncodeToString(hasher.Sum(nil))
+
+	hashedPath := fmt.Sprintf("%s_%s", projectName, hash)
+
+	return hashedPath, nil
 }
 
 func GetDefaultUserPath() string {

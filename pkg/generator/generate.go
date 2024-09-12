@@ -17,17 +17,14 @@
 package generator
 
 import (
-	"context"
-	"fmt"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,15 +32,14 @@ import (
 type RGOGenerator struct {
 	RGOBasePath       string
 	rgoConfig         *config.RGOConfig
-	changedRepoCommit map[string]string
-	wg                sync.WaitGroup
+	changedRepoCommit *sync.Map
 }
 
 func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	return &RGOGenerator{
 		RGOBasePath:       rgoBasePath,
 		rgoConfig:         rgoConfig,
-		changedRepoCommit: make(map[string]string),
+		changedRepoCommit: &sync.Map{},
 	}
 }
 
@@ -53,80 +49,80 @@ type Gen interface {
 }
 
 func (rg *RGOGenerator) Run() {
+	defer func() {
+		if r := recover(); r != nil {
+			stackTrace := string(debug.Stack())
+			rlog.Errorf("Failed to run rgo: %v\nStack Trace:\n%s", r, stackTrace)
+		}
+	}()
+
 	rg.generateRepoCode()
 
 	rg.generateSrcCode()
 }
 
 func (rg *RGOGenerator) generateRepoCode() {
-	changedRepoCommit := rg.changedRepoCommit
-
 	idlRepos := rg.rgoConfig.IDLRepos
 
-	// create errgroup
-	g, ctx := errgroup.WithContext(context.Background())
+	var eg errgroup.Group
 
-	// create a gopool pool and limit the number of concurrent calls
-	pool, _ := ants.NewPoolWithFunc(10, func(repo interface{}) {
-		defer rg.wg.Done()
-		rg.processRepo(repo.(config.IDLRepo), changedRepoCommit)
-	})
-	defer pool.Release()
-
-	// traverse each idl repo and submit the task to gopool
 	for _, repo := range idlRepos {
-		repo := repo
-		rg.wg.Add(1)
-
-		g.Go(func() error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				return pool.Invoke(repo)
+		eg.Go(func(repo config.IDLRepo) func() error {
+			return func() error {
+				return rg.processRepo(repo, rg.changedRepoCommit)
 			}
-		})
+		}(repo))
 	}
 
-	rg.wg.Wait()
-
-	if err := g.Wait(); err != nil {
+	if err := eg.Wait(); err != nil {
 		rlog.Errorf("Failed to process all idl repos: %v", err)
+		return
 	}
 }
 
-func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit map[string]string) {
+func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit *sync.Map) error {
 	filePath := filepath.Join(rg.RGOBasePath, consts.IDLPath, repo.RepoName)
 
 	exist, err := utils.PathExist(filePath)
 	if err != nil {
 		rlog.Errorf("Failed to check if path %s exists: %v", filePath, err)
-		return
+		return err
+	}
+
+	if repo.Commit == "" {
+		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
+		if err != nil {
+			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
+			return err
+		}
+		changedRepoCommit.Store(repo.RepoName, commit)
+		return nil
 	}
 
 	if !exist {
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
-			return
+			return err
 		}
-		changedRepoCommit[repo.RepoName] = commit
+		changedRepoCommit.Store(repo.RepoName, commit)
 	} else {
 		id, err := utils.GetLatestCommitID(filePath)
 		if err != nil {
 			rlog.Errorf("Failed to get latest commit id for %s: %v", repo, err)
-			return
+			return nil
 		}
 
 		if id != repo.Commit {
 			commit, err := rg.updateRemoteRepo(repo, filePath, repo.Commit)
 			if err != nil {
 				rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
-				return
+				return err
 			}
-			changedRepoCommit[repo.RepoName] = commit
+			changedRepoCommit.Store(repo.RepoName, commit)
 		}
 	}
+	return nil
 }
 
 func (rg *RGOGenerator) generateSrcCode() {
@@ -134,14 +130,10 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
-		if _, ok := changedRepoCommit[idl.RepoName]; !ok {
+		if _, ok := changedRepoCommit.Load(idl.RepoName); !ok {
 			continue
 		}
-		servicePath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
-
-		commit := changedRepoCommit[idl.RepoName]
-
-		srcPath := filepath.Join(servicePath, fmt.Sprintf("%s-%v", commit, time.Now().Format("2006-01-02")))
+		srcPath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
@@ -188,12 +180,6 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 }
 
 func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
-	defer func() {
-		if r := recover(); r != nil {
-			rlog.Errorf("Failed to update commit for %s: %v", repoName, r)
-		}
-	}()
-
 	repos := viper.Get("idl_repos").([]interface{})
 	var res []config.IDLRepo
 

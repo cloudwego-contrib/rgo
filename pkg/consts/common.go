@@ -34,6 +34,8 @@ const (
 const (
 	GoMod  = "go.mod"
 	GoWork = "go.work"
+
+	ThriftPostfix = ".thrift"
 )
 
 const (
