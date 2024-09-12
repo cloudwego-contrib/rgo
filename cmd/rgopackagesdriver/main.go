@@ -25,8 +25,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"strings"
+
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 
 	"github.com/cloudwego-contrib/rgo/cmd/rgopackagesdriver/internal"
 	"golang.org/x/tools/go/packages"
@@ -81,12 +82,12 @@ func (t *DefaultPackageLoader) LoadPackages(cfg *packages.Config, pkgs ...string
 }
 
 func init() {
-	curWorkPath, err := GetCurrentPathWithUnderline()
+	curWorkPath, err := utils.GetCurrentPathWithUnderline()
 	if err != nil {
 		panic(err)
 	}
 
-	rgoBasePath = filepath.Join(GetDefaultUserPath(), RGOBasePath, curWorkPath)
+	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), RGOBasePath, curWorkPath)
 }
 
 func main() {
@@ -216,42 +217,4 @@ func signalContext(parentCtx context.Context, signals ...os.Signal) (ctx context
 	signal.Notify(ch, signals...)
 
 	return ctx, cancel
-}
-
-func GetCurrentPathWithUnderline() (string, error) {
-	currentPath, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	// Windows
-	if strings.HasPrefix(currentPath, "\\") || strings.Contains(currentPath, ":\\") {
-		currentPath = strings.ReplaceAll(currentPath, ":", "")
-		currentPath = strings.ReplaceAll(currentPath, "\\", "_")
-	} else {
-		// Unix
-		currentPath = strings.TrimSpace(currentPath)
-		currentPath = currentPath[1:]
-		currentPath = strings.ReplaceAll(currentPath, "/", "_")
-	}
-
-	return currentPath, nil
-}
-
-func GetDefaultUserPath() string {
-	var homeDir string
-	switch runtime.GOOS {
-	case "windows":
-		homeDir = os.Getenv("USERPROFILE")
-	case "darwin":
-		homeDir = os.Getenv("HOME")
-	case "linux":
-		homeDir = os.Getenv("HOME")
-	default:
-		log.Fatalf("Unsupported OS: %s", runtime.GOOS)
-	}
-	if homeDir == "" {
-		log.Fatal("Cannot get user home directory")
-	}
-	return homeDir
 }
