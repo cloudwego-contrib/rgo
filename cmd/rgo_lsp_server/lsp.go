@@ -38,7 +38,7 @@ func init() {
 	}()
 	logPath = os.Getenv(consts.LSPLogPathEnv)
 	if logPath == "" {
-		logger = log.New(os.Stderr, consts.LogPrefix, 0)
+		logger = log.New(os.Stderr, consts.RGOLsp, 0)
 		return
 	}
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
@@ -47,7 +47,7 @@ func init() {
 	}
 
 	multiWriter := io.MultiWriter(os.Stderr, f)
-	logger = log.New(multiWriter, consts.LogPrefix, 0)
+	logger = log.New(multiWriter, consts.RGOLsp, 0)
 }
 
 func RunLspServer(cancel context.CancelFunc) {

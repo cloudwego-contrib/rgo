@@ -43,7 +43,7 @@ func initConfig() *generator.RGOGenerator {
 
 	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	rlog.InitLogger(rgoBasePath)
+	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOLsp))
 
 	c, err := config.ReadConfig(consts.RGOConfigPath)
 	if err != nil {
