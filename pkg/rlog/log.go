@@ -51,7 +51,7 @@ func InitLogger(logPath string) {
 		zapcore.InfoLevel,
 	)
 
-	logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	logger = zap.New(core, zap.AddCaller())
 	defer logger.Sync()
 
 	logger.Info("test log info")

@@ -19,17 +19,17 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"go/format"
+	"go/token"
 	"os"
 	"path/filepath"
 
-	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
-	"github.com/cloudwego/thriftgo/parser"
 )
 
-func (rg *RGOGenerator) GenerateRGOCode(serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenerateRGOCode(formatServiceName, idlPath, rgoSrcPath string) error {
 	exist, err := utils.FileExistsInPath(rgoSrcPath, consts.GoMod)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (rg *RGOGenerator) GenerateRGOCode(serviceName, formatServiceName, idlPath,
 
 	switch fileType {
 	case consts.ThriftPostfix:
-		err = rg.GenRgoBaseCode(serviceName, formatServiceName, idlPath, rgoSrcPath)
+		err = rg.GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath)
 		if err != nil {
 			return err
 		}
@@ -62,53 +62,30 @@ func (rg *RGOGenerator) GenerateRGOCode(serviceName, formatServiceName, idlPath,
 	}
 }
 
-func (rg *RGOGenerator) GenRgoClientCode(serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
-	// Parse the IDL file to extract the thrift structure
+func (rg *RGOGenerator) GenRgoClientCode(serviceName, idlPath, rgoSrcPath string) error {
 	thriftFile, err := parseIDLFile(idlPath)
 	if err != nil {
 		return err
 	}
 
-	// Extract necessary information from the thrift file to create the template data
-	templateData, err := rg.buildClientTemplateData(serviceName, formatServiceName, thriftFile)
+	fset := token.NewFileSet()
+
+	f, err := plugin.BuildRGOThriftAstFile(serviceName, thriftFile)
 	if err != nil {
 		return err
 	}
 
-	// Render the client template using the extracted data
-	renderedCode, err := plugin.RenderEditClientTemplate(templateData)
-	if err != nil {
-		return err
-	}
-
-	// Define the output directory and file path
 	outputDir := rgoSrcPath
-	outputFilePath := filepath.Join(outputDir, fmt.Sprintf("%s_cli.go", utils.GetFileNameWithoutExt(thriftFile.Filename)))
 
-	// Create the output file
-	outputFile, err := os.Create(outputFilePath)
+	outputFile, err := os.Create(filepath.Join(outputDir, fmt.Sprintf("%s_cli.go", utils.GetFileNameWithoutExt(thriftFile.Filename))))
 	if err != nil {
 		return err
 	}
 	defer outputFile.Close()
 
-	// Write the rendered code to the output file
-	_, err = outputFile.WriteString(renderedCode)
-	if err != nil {
+	if err = format.Node(outputFile, fset, f); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (rg *RGOGenerator) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
-	data := &config.RGOClientTemplateData{
-		RGOModuleName:     consts.RGOModuleName,
-		ServiceName:       serviceName,
-		FormatServiceName: formatServiceName,
-		Imports:           []string{"context", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt"},
-		Thrift:            thriftFile,
-	}
-
-	return data, nil
 }

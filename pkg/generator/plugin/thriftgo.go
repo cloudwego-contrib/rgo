@@ -18,24 +18,20 @@ package plugin
 
 import (
 	"fmt"
+	"go/format"
+	"go/token"
 	"os"
 	"path/filepath"
-
-	"github.com/cloudwego-contrib/rgo/pkg/config"
-	"github.com/cloudwego/thriftgo/parser"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/thriftgo/plugin"
 )
 
-func GetRGOThriftgoPlugin(pwd, serviceName, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
+func GetRGOThriftgoPlugin(pwd, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
 	rgoPlugin := &RGOThriftgoPlugin{}
 
 	rgoPlugin.Pwd = pwd
-	rgoPlugin.ServiceName = serviceName
 	rgoPlugin.FormatServiceName = formatServiceName
 	rgoPlugin.Args = Args
 
@@ -44,7 +40,6 @@ func GetRGOThriftgoPlugin(pwd, serviceName, formatServiceName string, Args []str
 
 type RGOThriftgoPlugin struct {
 	Args              []string
-	ServiceName       string
 	FormatServiceName string
 	Pwd               string
 }
@@ -59,28 +54,16 @@ func (r *RGOThriftgoPlugin) GetPluginParameters() []string {
 
 func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	formatServiceName := r.FormatServiceName
-	serviceName := r.FormatServiceName
 
 	thrift := req.AST
 
-	for k := range thrift.Services {
-		for i := range thrift.Services[k].Functions {
-			thrift.Services[k].Functions[i].Name = cases.Title(language.Und).String(thrift.Services[k].Functions[i].Name)
-		}
-	}
+	fset := token.NewFileSet()
 
-	templateData, err := buildClientTemplateData(serviceName, formatServiceName, thrift)
+	// Call the function
+	file, err := BuildRGOThriftAstFile(formatServiceName, thrift)
 	if err != nil {
 		return &plugin.Response{
-			Error: strToPointer(fmt.Sprintf("failed to build client template data: %v", err)),
-		}
-	}
-
-	// Render the client template using the extracted data
-	renderedCode, err := RenderEditClientTemplate(templateData)
-	if err != nil {
-		return &plugin.Response{
-			Error: strToPointer(fmt.Sprintf("failed to render ast file: %v", err)),
+			Error: strToPointer(fmt.Sprintf("failed to build rgo thrift ast file: %v", err)),
 		}
 	}
 
@@ -115,10 +98,9 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	}
 	defer outputFile.Close()
 
-	_, err = outputFile.WriteString(renderedCode)
-	if err != nil {
+	if err = format.Node(outputFile, fset, file); err != nil {
 		return &plugin.Response{
-			Error: strToPointer(fmt.Sprintf("failed to write render code to file: %v", err)),
+			Error: strToPointer(fmt.Sprintf("failed to format file: %v", err)),
 		}
 	}
 
@@ -130,16 +112,4 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	}
 
 	return &plugin.Response{}
-}
-
-func buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
-	data := &config.RGOClientTemplateData{
-		RGOModuleName:     consts.RGOModuleName,
-		ServiceName:       serviceName,
-		FormatServiceName: formatServiceName,
-		Imports:           []string{"context", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt"},
-		Thrift:            thriftFile,
-	}
-
-	return data, nil
 }

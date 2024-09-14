@@ -63,6 +63,14 @@ func RunLspServer(cancel context.CancelFunc) {
 }
 
 func setAllMethodsNull(s *lsp.Server) {
+	s.OnInitialize(func(ctx context.Context, req *defines.InitializeParams) (result *defines.InitializeResult, err *defines.InitializeError) {
+		return nil, nil
+	})
+
+	s.OnInitialized(func(ctx context.Context, req *defines.InitializeParams) (err error) {
+		return nil
+	})
+
 	s.OnShutdown(func(ctx context.Context, req *interface{}) (err error) {
 		return nil
 	})

@@ -28,7 +28,7 @@ import (
 	"github.com/cloudwego/thriftgo/sdk"
 )
 
-func (rg *RGOGenerator) GenRgoBaseCode(serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
+func (rg *RGOGenerator) GenRgoBaseCode(formatServiceName, idlPath, rgoSrcPath string) error {
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	args := []string{
@@ -38,7 +38,7 @@ func (rg *RGOGenerator) GenRgoBaseCode(serviceName, formatServiceName, idlPath, 
 		idlPath,
 	}
 
-	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, serviceName, formatServiceName, nil)
+	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, formatServiceName, nil)
 	if err != nil {
 		return err
 	}
