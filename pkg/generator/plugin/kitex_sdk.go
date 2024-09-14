@@ -18,10 +18,11 @@ package plugin
 
 import (
 	"fmt"
-	"go/format"
-	"go/token"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
@@ -60,15 +61,29 @@ func (r *RGOKitexPlugin) GetPluginParameters() []string {
 }
 
 func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
+	formatServiceName := r.FormatServiceName
+	serviceName := r.FormatServiceName
+
 	thrift := req.AST
 
-	fset := token.NewFileSet()
+	for k := range thrift.Services {
+		for i := range thrift.Services[k].Functions {
+			thrift.Services[k].Functions[i].Name = cases.Title(language.Und).String(thrift.Services[k].Functions[i].Name)
+		}
+	}
 
-	// Call the function
-	file, err := BuildRGOGenThriftAstFile(r.ServiceName, r.FormatServiceName, thrift)
+	templateData, err := buildClientTemplateData(serviceName, formatServiceName, thrift)
 	if err != nil {
 		return &plugin.Response{
-			Error: strToPointer(fmt.Sprintf("failed to build thrift ast file: %v", err)),
+			Error: strToPointer(fmt.Sprintf("failed to build client template data: %v", err)),
+		}
+	}
+
+	// Render the client template using the extracted data
+	renderedCode, err := RenderCompileClientTemplate(templateData)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to render ast file: %v", err)),
 		}
 	}
 
@@ -103,9 +118,10 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	}
 	defer outputFile.Close()
 
-	if err = format.Node(outputFile, fset, file); err != nil {
+	_, err = outputFile.WriteString(renderedCode)
+	if err != nil {
 		return &plugin.Response{
-			Error: strToPointer(fmt.Sprintf("failed to format file: %v", err)),
+			Error: strToPointer(fmt.Sprintf("failed to write render code to file: %v", err)),
 		}
 	}
 
