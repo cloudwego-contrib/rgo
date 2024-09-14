@@ -17,6 +17,7 @@
 package generator
 
 import (
+	"os"
 	"path/filepath"
 	"runtime/debug"
 	"sync"
@@ -56,6 +57,8 @@ func (rg *RGOGenerator) Run() {
 		}
 	}()
 
+	rlog.Info("PATH:" + os.Getenv("PATH"))
+
 	rg.generateRepoCode()
 
 	rg.generateSrcCode()
@@ -90,6 +93,12 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit *sync
 	}
 
 	if repo.Commit == "" {
+		err = os.RemoveAll(filePath)
+		if err != nil {
+			rlog.Errorf("Failed to remove repository %s: %v", repo, err)
+			return err
+		}
+
 		commit, err := rg.cloneRemoteRepo(repo, filePath, repo.Commit)
 		if err != nil {
 			rlog.Errorf("Failed to clone or update repository %s: %v", repo, err)
@@ -137,7 +146,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
-		err := rg.GenerateRGOCode(idl.FormatServiceName, idlPath, srcPath)
+		err := rg.GenerateRGOCode(idl.ServiceName, idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
 			rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
 		}
