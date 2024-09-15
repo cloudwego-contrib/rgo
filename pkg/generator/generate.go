@@ -57,8 +57,6 @@ func (rg *RGOGenerator) Run() {
 		}
 	}()
 
-	rlog.Info("PATH:" + os.Getenv("PATH"))
-
 	rg.generateRepoCode()
 
 	rg.generateSrcCode()
