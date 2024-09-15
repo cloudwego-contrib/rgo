@@ -101,7 +101,5 @@ func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 		generator.NewRGOGenerator(c, g.RGOBasePath).Run()
 	})
 
-	viper.OnConfigChange(config.ConfigChangeHandler)
-
 	<-ctx.Done()
 }

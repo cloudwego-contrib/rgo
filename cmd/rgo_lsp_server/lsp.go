@@ -51,6 +51,10 @@ func init() {
 }
 
 func RunLspServer(cancel context.CancelFunc) {
+	defer func() {
+		cancel()
+	}()
+
 	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
@@ -58,11 +62,13 @@ func RunLspServer(cancel context.CancelFunc) {
 	setAllMethodsNull(server)
 
 	server.Run()
-
-	cancel()
 }
 
 func setAllMethodsNull(s *lsp.Server) {
+	s.OnInitialized(func(ctx context.Context, req *defines.InitializeParams) (err error) {
+		return nil
+	})
+
 	s.OnShutdown(func(ctx context.Context, req *interface{}) (err error) {
 		return nil
 	})

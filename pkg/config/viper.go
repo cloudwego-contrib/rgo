@@ -21,7 +21,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
@@ -46,19 +45,13 @@ func ReadConfig(path string) (*RGOConfig, error) {
 	return c, nil
 }
 
-var ConfigChangeHandler func(e fsnotify.Event)
-
 func RewriteRGOConfig(key string, value interface{}) error {
-	viper.OnConfigChange(nil)
-
 	viper.Set(key, value)
 
 	err := viper.WriteConfig()
 	if err != nil {
 		return fmt.Errorf("failed to write config file: %v", err)
 	}
-
-	viper.OnConfigChange(ConfigChangeHandler)
 
 	return nil
 }
