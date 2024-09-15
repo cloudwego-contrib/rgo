@@ -165,7 +165,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
-		err := rg.GenerateRGOCode(idl.ServiceName, idl.FormatServiceName, idlPath, srcPath)
+		err := rg.GenerateRGOCode(idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
 			rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
 		}
