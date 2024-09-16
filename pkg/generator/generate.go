@@ -17,10 +17,13 @@
 package generator
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 	"sync"
+
+	"github.com/TobiasYin/go-lsp/lsp"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
@@ -34,13 +37,15 @@ type RGOGenerator struct {
 	RGOBasePath       string
 	rgoConfig         *config.RGOConfig
 	changedRepoCommit *sync.Map
+	LspServer         *lsp.Server
 }
 
-func NewRGOGenerator(rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
+func NewRGOGenerator(lspServer *lsp.Server, rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	return &RGOGenerator{
 		RGOBasePath:       rgoBasePath,
 		rgoConfig:         rgoConfig,
 		changedRepoCommit: &sync.Map{},
+		LspServer:         lspServer,
 	}
 }
 
@@ -57,9 +62,25 @@ func (rg *RGOGenerator) Run() {
 		}
 	}()
 
+	defer func() {
+		err := rg.sendNotification(consts.MethodRGORestartLSP, nil)
+		if err != nil {
+			rlog.Errorf("Failed to restart LSP: %v", err)
+			return
+		}
+	}()
+
 	rg.generateRepoCode()
 
 	rg.generateSrcCode()
+}
+
+func (rg *RGOGenerator) sendNotification(method string, params json.RawMessage) error {
+	err := rg.LspServer.SendNotification(method, params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (rg *RGOGenerator) generateRepoCode() {

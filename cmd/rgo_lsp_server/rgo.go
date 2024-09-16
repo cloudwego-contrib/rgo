@@ -50,7 +50,7 @@ func initConfig() *generator.RGOGenerator {
 		rlog.Warn("read rgo_config failed, file not found", zap.Error(err))
 	}
 
-	return generator.NewRGOGenerator(c, rgoBasePath)
+	return generator.NewRGOGenerator(server, c, rgoBasePath)
 }
 
 func RGORun(ctx context.Context) {
@@ -98,7 +98,7 @@ func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 
 		rlog.Info("Config file changed:", zap.String("file_name", e.Name), zap.Any("config", c))
 
-		generator.NewRGOGenerator(c, g.RGOBasePath).Run()
+		generator.NewRGOGenerator(g.LspServer, c, g.RGOBasePath).Run()
 	})
 
 	<-ctx.Done()

@@ -29,7 +29,11 @@ import (
 	"github.com/TobiasYin/go-lsp/lsp/defines"
 )
 
-var logPath string
+var (
+	logPath string
+
+	server *lsp.Server
+)
 
 func init() {
 	var logger *log.Logger
