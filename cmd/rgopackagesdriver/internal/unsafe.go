@@ -25,14 +25,17 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+// nolint
 type loaderPackage struct{}
 
+// nolint
 type parseValue struct {
 	f     *ast.File
 	err   error
 	ready chan struct{}
 }
 
+// nolint
 type loader struct {
 	pkgs map[string]*loaderPackage
 	packages.Config
