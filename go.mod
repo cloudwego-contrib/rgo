@@ -47,3 +47,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/TobiasYin/go-lsp v0.0.0-20231106040121-c84e66f01aa4 => github.com/violapioggia/go-lsp v0.0.0-20240916090506-d0b28bdca26b

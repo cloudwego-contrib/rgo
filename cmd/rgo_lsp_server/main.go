@@ -18,7 +18,14 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
 	"runtime/debug"
+	"syscall"
+	"time"
+
+	"github.com/TobiasYin/go-lsp/lsp"
+	"github.com/TobiasYin/go-lsp/lsp/defines"
 
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"go.uber.org/zap"
@@ -26,6 +33,13 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	server = lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
+		TriggerCharacters: &[]string{"."},
+	}})
 
 	go func() {
 		defer func() {
@@ -36,6 +50,18 @@ func main() {
 		}()
 
 		RGORun(ctx)
+	}()
+
+	// gracefully shutdown
+	go func() {
+		sig := <-signalChan
+		rlog.Info("Received signal, shutting down...", zap.String("signal", sig.String()))
+
+		cancel()
+
+		time.Sleep(2 * time.Second)
+
+		os.Exit(0)
 	}()
 
 	RunLspServer(cancel)

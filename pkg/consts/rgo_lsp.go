@@ -23,3 +23,8 @@ const (
 const (
 	RGOLsp = "rgo_lsp"
 )
+
+const (
+	MethodRGORestartLSP = "custom/rgo/restart_language_server"
+	MethodRGOWindowShow = "custom/rgo/window_show"
+)
