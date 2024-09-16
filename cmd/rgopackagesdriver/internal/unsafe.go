@@ -17,13 +17,37 @@
 package internal
 
 import (
+	"go/ast"
+	"go/types"
+	"sync"
 	_ "unsafe"
 
 	"golang.org/x/tools/go/packages"
 )
 
+type loaderPackage struct{}
+
+type parseValue struct {
+	f     *ast.File
+	err   error
+	ready chan struct{}
+}
+
 type loader struct {
+	pkgs map[string]*loaderPackage
 	packages.Config
+	sizes        types.Sizes // non-nil if needed by mode
+	parseCache   map[string]*parseValue
+	parseCacheMu sync.Mutex
+	exportMu     sync.Mutex // enforces mutual exclusion of exportdata operations
+
+	// Config.Mode contains the implied mode (see impliedLoadMode).
+	// Implied mode contains all the fields we need the data for.
+	// In requestedMode there are the actually requested fields.
+	// We'll zero them out before returning packages to the user.
+	// This makes it easier for us to get the conditions where
+	// we need certain modes right.
+	requestedMode packages.LoadMode
 }
 
 //go:linkname defaultDriver golang.org/x/tools/go/packages.defaultDriver

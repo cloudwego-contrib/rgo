@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -29,7 +30,11 @@ import (
 	"github.com/TobiasYin/go-lsp/lsp/defines"
 )
 
-var logPath string
+var (
+	logPath string
+
+	server *lsp.Server
+)
 
 func init() {
 	var logger *log.Logger
@@ -51,22 +56,24 @@ func init() {
 }
 
 func RunLspServer(cancel context.CancelFunc) {
-	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
-		TriggerCharacters: &[]string{"."},
-	}})
+	defer func() {
+		cancel()
+	}()
 
 	setAllMethodsNull(server)
 
 	server.Run()
+}
 
-	cancel()
+func SendNotification(method string, params json.RawMessage) error {
+	err := server.SendNotification(method, params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func setAllMethodsNull(s *lsp.Server) {
-	s.OnInitialize(func(ctx context.Context, req *defines.InitializeParams) (result *defines.InitializeResult, err *defines.InitializeError) {
-		return nil, nil
-	})
-
 	s.OnInitialized(func(ctx context.Context, req *defines.InitializeParams) (err error) {
 		return nil
 	})

@@ -96,9 +96,20 @@ export async function startRgoLspServer() {
     clientOptions
   );
 
-  await client.start().then(() => {
-    vscode.window.showInformationMessage("Rgo Language Server started");
+  client.onNotification('custom/rgo/restart_language_server', () =>{
+    vscode.commands.executeCommand('go.languageserver.restart');
   });
+
+  client.onNotification('custom/rgo/window_show', (params) =>{
+    const message = typeof params === 'object' ? JSON.stringify(params) : params;
+
+    vscode.window.showInformationMessage(message);
+  });
+
+  await client.start().then(() => {
+    vscode.window.showInformationMessage("RGO Language Server started");
+  });
+
 }
 
 export function deactivate(): Thenable<void> | undefined {
