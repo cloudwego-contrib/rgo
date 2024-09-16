@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -63,14 +62,6 @@ func RunLspServer(cancel context.CancelFunc) {
 	setAllMethodsNull(server)
 
 	server.Run()
-}
-
-func SendNotification(method string, params json.RawMessage) error {
-	err := server.SendNotification(method, params)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func setAllMethodsNull(s *lsp.Server) {
