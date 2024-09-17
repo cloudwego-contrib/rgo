@@ -70,7 +70,26 @@ func AddModuleToGoWork(modules ...string) error {
 		return fmt.Errorf("error adding module(s) to Go workspace: %v", err)
 	}
 
-	return RunGoWorkSync()
+	return nil
+}
+
+func ReplaceModulesInGoWork(oldModule string, newModule string) error {
+	removeCmd := exec.Command("go", "work", "edit", "-dropuse", oldModule)
+
+	if err := removeCmd.Run(); err != nil {
+		return fmt.Errorf("error removing old module from Go workspace: %v", err)
+	}
+
+	addCmd := exec.Command("go", "work", "use", newModule)
+
+	addCmd.Stdout = os.Stdout
+	addCmd.Stderr = os.Stderr
+
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("error adding new module to Go workspace: %v", err)
+	}
+
+	return nil
 }
 
 func RemoveModulesFromGoWork(modulesToRemove []string) error {

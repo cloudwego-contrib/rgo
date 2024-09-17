@@ -66,7 +66,9 @@ func Init() *cli.App {
 		{
 			Name:  CleanName,
 			Usage: CleanUsage,
-			Flags: nil,
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: consts.ConfigFlag, Aliases: []string{"c"}, Usage: "rgo_config file path, default: ./rgo_config.yaml", Destination: &idlConfigPath, Value: consts.RGOConfigPath},
+			},
 			Action: func(c *cli.Context) error {
 				return Clean()
 			},

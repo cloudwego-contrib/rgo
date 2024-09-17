@@ -32,12 +32,18 @@ const (
 )
 
 const (
-	GoMod  = "go.mod"
-	GoWork = "go.work"
+	GoMod     = "go.mod"
+	GoWork    = "go.work"
+	GOWorkSum = "go.work.sum"
 
 	ThriftPostfix = ".thrift"
 )
 
 const (
 	EnvPackagePrefix = "RGO_PACKAGE_PREFIX"
+)
+
+const (
+	GoWorkMode           = "gowork"
+	GoPackagesDriverMode = "gopackagesdriver"
 )

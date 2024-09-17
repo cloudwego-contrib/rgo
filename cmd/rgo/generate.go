@@ -42,9 +42,11 @@ var (
 	kitexCustomArgs cli.StringSlice
 
 	c *config.RGOConfig
+
+	isGoPackagesDriver bool
 )
 
-func InitConfig() {
+func InitConfig() error {
 	var err error
 
 	currentPath, err = utils.GetProjectHashPathWithUnderline()
@@ -63,10 +65,26 @@ func InitConfig() {
 	if err != nil {
 		panic(err)
 	}
+
+	isGoPackagesDriver = c.Mode == consts.GoPackagesDriverMode
+
+	switch c.Mode {
+	case consts.GoPackagesDriverMode:
+		isGoPackagesDriver = true
+	case consts.GoWorkMode:
+		isGoPackagesDriver = false
+	default:
+		isGoPackagesDriver = true
+		fmt.Println("warning: unsupported rgo mode, use GoPackagesDriverMode as default")
+	}
+
+	return nil
 }
 
 func GenerateRGOCode() error {
-	InitConfig()
+	if err := InitConfig(); err != nil {
+		return err
+	}
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -80,6 +98,11 @@ func GenerateRGOCode() error {
 
 	if !exist {
 		err = utils.InitGoWork()
+		if err != nil {
+			return err
+		}
+
+		err = utils.AddModuleToGoWork(".")
 		if err != nil {
 			return err
 		}
@@ -104,9 +127,18 @@ func GenerateRGOCode() error {
 					return fmt.Errorf("failed to generate rgo code:%v", err)
 				}
 
-				err = utils.AddModuleToGoWork(path)
-				if err != nil {
-					return err
+				if isGoPackagesDriver {
+					err = utils.AddModuleToGoWork(path)
+					if err != nil {
+						return err
+					}
+				} else {
+					oldPath := filepath.Join(rgoBasePath, consts.RepoPath, c.IDLs[k].FormatServiceName)
+
+					err = utils.ReplaceModulesInGoWork(oldPath, path)
+					if err != nil {
+						return err
+					}
 				}
 
 				c.IDLs = append(c.IDLs[:k], c.IDLs[k+1:]...)
@@ -114,7 +146,7 @@ func GenerateRGOCode() error {
 		}
 	}
 
-	return nil
+	return utils.RunGoWorkSync()
 }
 
 func generateKitexGen(wd, module, idlPath string, customArgs []string, plugins ...plugin.SDKPlugin) error {
