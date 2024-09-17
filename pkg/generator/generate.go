@@ -18,11 +18,12 @@ package generator
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 	"sync"
+
+	"go.uber.org/zap"
 
 	"github.com/TobiasYin/go-lsp/lsp"
 

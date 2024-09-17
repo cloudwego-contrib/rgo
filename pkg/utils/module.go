@@ -73,7 +73,7 @@ func AddModuleToGoWork(modules ...string) error {
 	return nil
 }
 
-func ReplaceModulesInGoWork(oldModule string, newModule string) error {
+func ReplaceModulesInGoWork(oldModule, newModule string) error {
 	removeCmd := exec.Command("go", "work", "edit", "-dropuse", oldModule)
 
 	if err := removeCmd.Run(); err != nil {
