@@ -43,3 +43,8 @@ const (
 	GoWorkMode           = "gowork"
 	GoPackagesDriverMode = "gopackagesdriver"
 )
+
+const (
+	GoWorkMode           = "gowork"
+	GoPackagesDriverMode = "gopackagesdriver"
+)
