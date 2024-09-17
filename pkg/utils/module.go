@@ -92,13 +92,22 @@ func ReplaceModulesInGoWork(oldModule, newModule string) error {
 	return nil
 }
 
+func RemoveModuleFromGoWork(moduleToRemove string) error {
+	cmd := exec.Command("go", "work", "edit", "-dropuse", moduleToRemove)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute 'go work edit -dropuse': %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
 func RemoveModulesFromGoWork(modulesToRemove []string) error {
 	for _, mod := range modulesToRemove {
-		cmd := exec.Command("go", "work", "edit", "-dropuse", mod)
-
-		output, err := cmd.CombinedOutput()
+		err := RemoveModuleFromGoWork(mod)
 		if err != nil {
-			return fmt.Errorf("failed to execute 'go work edit -dropuse': %v, output: %s", err, string(output))
+			return err
 		}
 	}
 

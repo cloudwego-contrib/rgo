@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync"
 
 	"go.uber.org/zap"
@@ -195,6 +196,22 @@ func (rg *RGOGenerator) generateSrcCode() {
 			if err != nil {
 				rlog.Errorf("Failed to add module to go.work: %v", err)
 				return
+			}
+		} else {
+			goWork, err := utils.GetGoWorkJson()
+			if err != nil {
+				rlog.Errorf("Failed to get go.work json: %v", err)
+				return
+			}
+
+			for _, use := range goWork.Use {
+				if strings.Contains(use.DiskPath, consts.RGOBasePath) {
+					err = utils.RemoveModuleFromGoWork(use.DiskPath)
+					if err != nil {
+						rlog.Errorf("Failed to remove modules from go.work: %v", err)
+						return
+					}
+				}
 			}
 		}
 	}
