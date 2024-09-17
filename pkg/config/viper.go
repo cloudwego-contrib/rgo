@@ -21,6 +21,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
 	"github.com/spf13/viper"
 )
 
@@ -40,6 +42,10 @@ func ReadConfig(path string) (*RGOConfig, error) {
 	for i := range c.IDLs {
 		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].ServiceName, "-", "_")
 		c.IDLs[i].FormatServiceName = strings.ReplaceAll(c.IDLs[i].FormatServiceName, ".", "_")
+	}
+
+	if c.ProjectModule == "" {
+		c.ProjectModule = consts.RGODefaultModuleName
 	}
 
 	return c, nil

@@ -31,10 +31,11 @@ import (
 	"github.com/cloudwego/thriftgo/plugin"
 )
 
-func GetRGOThriftgoPlugin(pwd, serviceName, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
+func GetRGOThriftgoPlugin(pwd, projectModule, serviceName, formatServiceName string, Args []string) (*RGOThriftgoPlugin, error) {
 	rgoPlugin := &RGOThriftgoPlugin{}
 
 	rgoPlugin.Pwd = pwd
+	rgoPlugin.ProjectModule = projectModule
 	rgoPlugin.ServiceName = serviceName
 	rgoPlugin.FormatServiceName = formatServiceName
 	rgoPlugin.Args = Args
@@ -44,13 +45,14 @@ func GetRGOThriftgoPlugin(pwd, serviceName, formatServiceName string, Args []str
 
 type RGOThriftgoPlugin struct {
 	Args              []string
+	ProjectModule     string
 	ServiceName       string
 	FormatServiceName string
 	Pwd               string
 }
 
 func (r *RGOThriftgoPlugin) GetName() string {
-	return consts.RGOModuleName
+	return r.ProjectModule
 }
 
 func (r *RGOThriftgoPlugin) GetPluginParameters() []string {
@@ -69,7 +71,7 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 		}
 	}
 
-	templateData, err := buildClientTemplateData(serviceName, formatServiceName, thrift)
+	templateData, err := r.buildClientTemplateData(serviceName, formatServiceName, thrift)
 	if err != nil {
 		return &plugin.Response{
 			Error: strToPointer(fmt.Sprintf("failed to build client template data: %v", err)),
@@ -99,7 +101,7 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, formatServiceName), r.Pwd)
+		err = utils.InitGoMod(filepath.Join(r.ProjectModule, formatServiceName), r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),
@@ -132,9 +134,9 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	return &plugin.Response{}
 }
 
-func buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
+func (r *RGOThriftgoPlugin) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
 	data := &config.RGOClientTemplateData{
-		RGOModuleName:     consts.RGOModuleName,
+		RGOModuleName:     r.ProjectModule,
 		ServiceName:       serviceName,
 		FormatServiceName: formatServiceName,
 		Imports:           []string{"context", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt"},
