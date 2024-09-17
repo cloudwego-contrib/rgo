@@ -25,8 +25,9 @@ import (
 )
 
 func Clean() error {
-	InitConfig()
-
+	if err := InitConfig(); err != nil {
+		return err
+	}
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -58,9 +59,20 @@ func Clean() error {
 		}
 	}
 
-	err = utils.RemoveModulesFromGoWork(removeModulePaths)
-	if err != nil {
-		return err
+	if isGoPackagesDriver {
+		err = utils.RemoveModulesFromGoWork(removeModulePaths)
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, removePath := range removeModulePaths {
+			path := filepath.Join(rgoBasePath, consts.RepoPath, filepath.Base(removePath))
+
+			err = utils.ReplaceModulesInGoWork(removePath, path)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	goWork, err := utils.GetGoWorkJson()
@@ -70,6 +82,10 @@ func Clean() error {
 
 	if len(goWork.Use) <= 1 {
 		err = os.RemoveAll(filepath.Join(wd, consts.GoWork))
+		if err != nil {
+			return err
+		}
+		err = os.RemoveAll(filepath.Join(wd, consts.GOWorkSum))
 		if err != nil {
 			return err
 		}

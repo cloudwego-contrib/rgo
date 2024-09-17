@@ -31,6 +31,7 @@ type IDL struct {
 }
 
 type RGOConfig struct {
+	Mode     string    `yaml:"mode" mapstructure:"mode"`
 	IDLRepos []IDLRepo `yaml:"idl_repos" mapstructure:"idl_repos"`
 	IDLs     []IDL     `yaml:"idls" mapstructure:"idls"`
 }

@@ -32,7 +32,7 @@ func (rg *RGOGenerator) GenRgoBaseCode(serviceName, formatServiceName, idlPath, 
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	args := []string{
-		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(consts.RGOModuleName, "kitex_gen")),
+		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(consts.RGOModuleName, formatServiceName, "kitex_gen")),
 		"-o", outputDir,
 		"--recurse",
 		idlPath,

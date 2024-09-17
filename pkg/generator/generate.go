@@ -21,7 +21,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync"
+
+	"go.uber.org/zap"
 
 	"github.com/TobiasYin/go-lsp/lsp"
 
@@ -34,18 +37,32 @@ import (
 )
 
 type RGOGenerator struct {
-	RGOBasePath       string
-	rgoConfig         *config.RGOConfig
-	changedRepoCommit *sync.Map
-	LspServer         *lsp.Server
+	isGoPackagesDriver bool
+	RGOBasePath        string
+	rgoConfig          *config.RGOConfig
+	changedRepoCommit  *sync.Map
+	LspServer          *lsp.Server
 }
 
 func NewRGOGenerator(lspServer *lsp.Server, rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
+	var isGoPackagesDriver bool
+
+	switch rgoConfig.Mode {
+	case consts.GoPackagesDriverMode:
+		isGoPackagesDriver = true
+	case consts.GoWorkMode:
+		isGoPackagesDriver = false
+	default:
+		rlog.Warn("unsupported rgo mode, use GoPackagesDriverMode as default", zap.String("mode", rgoConfig.Mode))
+		isGoPackagesDriver = true
+	}
+
 	return &RGOGenerator{
-		RGOBasePath:       rgoBasePath,
-		rgoConfig:         rgoConfig,
-		changedRepoCommit: &sync.Map{},
-		LspServer:         lspServer,
+		isGoPackagesDriver: isGoPackagesDriver,
+		RGOBasePath:        rgoBasePath,
+		rgoConfig:          rgoConfig,
+		changedRepoCommit:  &sync.Map{},
+		LspServer:          lspServer,
 	}
 }
 
@@ -156,6 +173,49 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit *sync
 func (rg *RGOGenerator) generateSrcCode() {
 	changedRepoCommit := rg.changedRepoCommit
 
+	if !rg.isGoPackagesDriver {
+		wd, err := os.Getwd()
+		if err != nil {
+			rlog.Errorf("Failed to get current working directory: %v", err)
+			return
+		}
+
+		exist, err := utils.FileExistsInPath(wd, consts.GoWork)
+		if err != nil {
+			rlog.Errorf("Failed to check if go.work exists in path %s: %v", wd, err)
+			return
+		}
+
+		if !exist {
+			err = utils.InitGoWork()
+			if err != nil {
+				rlog.Errorf("Failed to init go.work: %v", err)
+				return
+			}
+			err = utils.AddModuleToGoWork(".")
+			if err != nil {
+				rlog.Errorf("Failed to add module to go.work: %v", err)
+				return
+			}
+		} else {
+			goWork, err := utils.GetGoWorkJson()
+			if err != nil {
+				rlog.Errorf("Failed to get go.work json: %v", err)
+				return
+			}
+
+			for _, use := range goWork.Use {
+				if strings.Contains(use.DiskPath, consts.RGOBasePath) {
+					err = utils.RemoveModuleFromGoWork(use.DiskPath)
+					if err != nil {
+						rlog.Errorf("Failed to remove modules from go.work: %v", err)
+						return
+					}
+				}
+			}
+		}
+	}
+
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
 		if _, ok := changedRepoCommit.Load(idl.RepoName); !ok {
@@ -168,8 +228,22 @@ func (rg *RGOGenerator) generateSrcCode() {
 		err := rg.GenerateRGOCode(idl.ServiceName, idl.FormatServiceName, idlPath, srcPath)
 		if err != nil {
 			rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
+			return
 		}
 
+		if !rg.isGoPackagesDriver {
+			err = utils.AddModuleToGoWork(srcPath)
+			if err != nil {
+				rlog.Errorf("Failed to add module to go.work: %v", err)
+				return
+			}
+		}
+	}
+
+	err := utils.RunGoWorkSync()
+	if err != nil {
+		rlog.Errorf("Failed to run go work sync: %v", err)
+		return
 	}
 }
 

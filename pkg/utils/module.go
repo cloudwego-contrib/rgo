@@ -70,16 +70,44 @@ func AddModuleToGoWork(modules ...string) error {
 		return fmt.Errorf("error adding module(s) to Go workspace: %v", err)
 	}
 
-	return RunGoWorkSync()
+	return nil
+}
+
+func ReplaceModulesInGoWork(oldModule, newModule string) error {
+	removeCmd := exec.Command("go", "work", "edit", "-dropuse", oldModule)
+
+	if err := removeCmd.Run(); err != nil {
+		return fmt.Errorf("error removing old module from Go workspace: %v", err)
+	}
+
+	addCmd := exec.Command("go", "work", "use", newModule)
+
+	addCmd.Stdout = os.Stdout
+	addCmd.Stderr = os.Stderr
+
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("error adding new module to Go workspace: %v", err)
+	}
+
+	return nil
+}
+
+func RemoveModuleFromGoWork(moduleToRemove string) error {
+	cmd := exec.Command("go", "work", "edit", "-dropuse", moduleToRemove)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute 'go work edit -dropuse': %v, output: %s", err, string(output))
+	}
+
+	return nil
 }
 
 func RemoveModulesFromGoWork(modulesToRemove []string) error {
 	for _, mod := range modulesToRemove {
-		cmd := exec.Command("go", "work", "edit", "-dropuse", mod)
-
-		output, err := cmd.CombinedOutput()
+		err := RemoveModuleFromGoWork(mod)
 		if err != nil {
-			return fmt.Errorf("failed to execute 'go work edit -dropuse': %v, output: %s", err, string(output))
+			return err
 		}
 	}
 
