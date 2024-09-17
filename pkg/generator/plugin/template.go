@@ -24,8 +24,7 @@ import (
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 )
 
-const defaultRGOEditClientTemplate = `
-package {{.FormatServiceName}}
+const defaultRGOEditClientTemplate = `package {{.FormatServiceName}}
 
 import (
 	{{- range .Imports }}
@@ -53,8 +52,7 @@ func {{.Name}}(ctx context.Context, {{range .Arguments}}{{.Name}} *{{(index $.Na
 {{end}}
 `
 
-const defaultRGOCompileClientTemplate = `
-package {{.FormatServiceName}}
+const defaultRGOCompileClientTemplate = `package {{.FormatServiceName}}
 
 import (
 	{{- range .Imports }}

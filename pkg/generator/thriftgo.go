@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/cloudwego-contrib/rgo/pkg/consts"
-
 	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego/thriftgo/parser"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -32,13 +30,13 @@ func (rg *RGOGenerator) GenRgoBaseCode(serviceName, formatServiceName, idlPath, 
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	args := []string{
-		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(consts.RGOModuleName, formatServiceName, "kitex_gen")),
+		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(rg.rgoConfig.ProjectModule, formatServiceName, "kitex_gen")),
 		"-o", outputDir,
 		"--recurse",
 		idlPath,
 	}
 
-	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, serviceName, formatServiceName, nil)
+	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, rg.rgoConfig.ProjectModule, serviceName, formatServiceName, nil)
 	if err != nil {
 		return err
 	}

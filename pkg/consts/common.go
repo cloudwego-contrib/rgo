@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	RGOModuleName = "rgo"
+	RGODefaultModuleName = "rgo"
 )
 
 const (
@@ -37,10 +37,6 @@ const (
 	GOWorkSum = "go.work.sum"
 
 	ThriftPostfix = ".thrift"
-)
-
-const (
-	EnvPackagePrefix = "RGO_PACKAGE_PREFIX"
 )
 
 const (

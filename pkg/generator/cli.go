@@ -41,7 +41,7 @@ func (rg *RGOGenerator) GenerateRGOCode(serviceName, formatServiceName, idlPath,
 			return fmt.Errorf("failed to create directory: %v", err)
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, formatServiceName), rgoSrcPath)
+		err = utils.InitGoMod(filepath.Join(rg.rgoConfig.ProjectModule, formatServiceName), rgoSrcPath)
 		if err != nil {
 			return err
 		}
@@ -103,7 +103,7 @@ func (rg *RGOGenerator) GenRgoClientCode(serviceName, formatServiceName, idlPath
 
 func (rg *RGOGenerator) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
 	data := &config.RGOClientTemplateData{
-		RGOModuleName:     consts.RGOModuleName,
+		RGOModuleName:     rg.rgoConfig.ProjectModule,
 		ServiceName:       serviceName,
 		FormatServiceName: formatServiceName,
 		Imports:           []string{"context", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt"},
