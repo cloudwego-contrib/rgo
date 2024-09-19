@@ -23,7 +23,6 @@ import (
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego/thriftgo/parser"
-
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -67,7 +66,7 @@ func (r *RGOKitexPlugin) GetPluginParameters() []string {
 
 func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	formatServiceName := r.FormatServiceName
-	serviceName := r.FormatServiceName
+	serviceName := r.ServiceName
 
 	thrift := req.AST
 
@@ -107,7 +106,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(r.ProjectModule, r.FormatServiceName), r.Pwd)
+		err = utils.InitGoMod(r.ProjectModule, r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),

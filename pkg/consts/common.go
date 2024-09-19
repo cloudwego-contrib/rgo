@@ -28,7 +28,8 @@ const (
 )
 
 const (
-	RGODefaultModuleName = "rgo"
+	RGODefaultModuleName = "rgo/" + RGOServiceName
+	RGOServiceName       = "$service_name"
 )
 
 const (

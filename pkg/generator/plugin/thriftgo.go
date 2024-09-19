@@ -61,7 +61,7 @@ func (r *RGOThriftgoPlugin) GetPluginParameters() []string {
 
 func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	formatServiceName := r.FormatServiceName
-	serviceName := r.FormatServiceName
+	serviceName := r.ServiceName
 
 	thrift := req.AST
 
@@ -101,7 +101,7 @@ func (r *RGOThriftgoPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(r.ProjectModule, formatServiceName), r.Pwd)
+		err = utils.InitGoMod(r.ProjectModule, r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),

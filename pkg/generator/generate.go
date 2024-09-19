@@ -232,6 +232,7 @@ func (rg *RGOGenerator) generateSrcCode() {
 		}
 
 		if !rg.isGoPackagesDriver {
+			rlog.Info(srcPath)
 			err = utils.AddModuleToGoWork(srcPath)
 			if err != nil {
 				rlog.Errorf("Failed to add module to go.work: %v", err)

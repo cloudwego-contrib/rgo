@@ -30,7 +30,7 @@ import (
 	{{- range .Imports }}
 	"{{.}}"
 	{{- end }}
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
 )
 
 type {{(index .Services 0).Name}}Client struct {
@@ -58,8 +58,8 @@ import (
 	{{- range .Imports }}
 	"{{.}}"
 	{{- end }}
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}/{{ToLower (index .Services 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}/{{ToLower (index .Services 0).Name}}"
 )
 
 var defaultClient *{{(index .Services 0).Name}}Client
