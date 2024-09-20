@@ -21,6 +21,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cloudwego-contrib/rgo/pkg/config"
+	"github.com/cloudwego/thriftgo/parser"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -34,10 +36,11 @@ func strToPointer(str string) *string {
 	return &str
 }
 
-func GetRGOKitexPlugin(pwd, serviceName, formatServiceName string, Args []string) (*RGOKitexPlugin, error) {
+func GetRGOKitexPlugin(pwd, projectModule, serviceName, formatServiceName string, Args []string) (*RGOKitexPlugin, error) {
 	rgoPlugin := &RGOKitexPlugin{}
 
 	rgoPlugin.Pwd = pwd
+	rgoPlugin.ProjectModule = projectModule
 	rgoPlugin.ServiceName = serviceName
 	rgoPlugin.FormatServiceName = formatServiceName
 	rgoPlugin.Args = Args
@@ -47,13 +50,14 @@ func GetRGOKitexPlugin(pwd, serviceName, formatServiceName string, Args []string
 
 type RGOKitexPlugin struct {
 	Args              []string
+	ProjectModule     string
 	ServiceName       string
 	FormatServiceName string
 	Pwd               string
 }
 
 func (r *RGOKitexPlugin) GetName() string {
-	return consts.RGOModuleName
+	return r.ProjectModule
 }
 
 func (r *RGOKitexPlugin) GetPluginParameters() []string {
@@ -62,7 +66,7 @@ func (r *RGOKitexPlugin) GetPluginParameters() []string {
 
 func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	formatServiceName := r.FormatServiceName
-	serviceName := r.FormatServiceName
+	serviceName := r.ServiceName
 
 	thrift := req.AST
 
@@ -72,7 +76,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 		}
 	}
 
-	templateData, err := buildClientTemplateData(serviceName, formatServiceName, thrift)
+	templateData, err := r.buildClientTemplateData(serviceName, formatServiceName, thrift)
 	if err != nil {
 		return &plugin.Response{
 			Error: strToPointer(fmt.Sprintf("failed to build client template data: %v", err)),
@@ -102,7 +106,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 			}
 		}
 
-		err = utils.InitGoMod(filepath.Join(consts.RGOModuleName, r.FormatServiceName), r.Pwd)
+		err = utils.InitGoMod(r.ProjectModule, r.Pwd)
 		if err != nil {
 			return &plugin.Response{
 				Error: strToPointer(err.Error()),
@@ -133,4 +137,16 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	}
 
 	return &plugin.Response{}
+}
+
+func (r *RGOKitexPlugin) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
+	data := &config.RGOClientTemplateData{
+		RGOModuleName:     r.ProjectModule,
+		ServiceName:       serviceName,
+		FormatServiceName: formatServiceName,
+		Imports:           []string{"context", "github.com/cloudwego/kitex/client", "github.com/cloudwego/kitex/client/callopt"},
+		Thrift:            thriftFile,
+	}
+
+	return data, nil
 }

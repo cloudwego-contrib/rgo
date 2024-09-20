@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 
@@ -37,8 +38,6 @@ var (
 	currentPath   string
 	rgoBasePath   string
 
-	packagePrefix string
-
 	kitexCustomArgs cli.StringSlice
 
 	c *config.RGOConfig
@@ -55,11 +54,6 @@ func InitConfig() error {
 	}
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
-
-	packagePrefix = os.Getenv(consts.EnvPackagePrefix)
-	if packagePrefix == "" {
-		packagePrefix = consts.RGOModuleName
-	}
 
 	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
@@ -117,12 +111,14 @@ func GenerateRGOCode() error {
 
 				path := filepath.Join(buildPath, c.IDLs[k].FormatServiceName)
 
-				rgoPlugin, err := thrift_plugin.GetRGOKitexPlugin(path, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
+				module := strings.ReplaceAll(c.ProjectModule, consts.RGOServiceName, c.IDLs[k].FormatServiceName)
+
+				rgoPlugin, err := thrift_plugin.GetRGOKitexPlugin(path, module, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
 				if err != nil {
 					return err
 				}
 
-				err = generateKitexGen(path, filepath.Join(packagePrefix, c.IDLs[k].FormatServiceName), idlPath, kitexCustomArgs.Value(), rgoPlugin)
+				err = generateKitexGen(path, module, idlPath, kitexCustomArgs.Value(), rgoPlugin)
 				if err != nil {
 					return fmt.Errorf("failed to generate rgo code:%v", err)
 				}

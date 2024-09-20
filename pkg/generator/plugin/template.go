@@ -24,14 +24,13 @@ import (
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 )
 
-const defaultRGOEditClientTemplate = `
-package {{.FormatServiceName}}
+const defaultRGOEditClientTemplate = `package {{.FormatServiceName}}
 
 import (
 	{{- range .Imports }}
 	"{{.}}"
 	{{- end }}
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
 )
 
 type {{(index .Services 0).Name}}Client struct {
@@ -53,15 +52,14 @@ func {{.Name}}(ctx context.Context, {{range .Arguments}}{{.Name}} *{{(index $.Na
 {{end}}
 `
 
-const defaultRGOCompileClientTemplate = `
-package {{.FormatServiceName}}
+const defaultRGOCompileClientTemplate = `package {{.FormatServiceName}}
 
 import (
 	{{- range .Imports }}
 	"{{.}}"
 	{{- end }}
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
-	"{{.RGOModuleName}}/{{.FormatServiceName}}/kitex_gen/{{(index .Namespaces 0).Name}}/{{ToLower (index .Services 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}"
+	"{{.RGOModuleName}}/kitex_gen/{{(index .Namespaces 0).Name}}/{{ToLower (index .Services 0).Name}}"
 )
 
 var defaultClient *{{(index .Services 0).Name}}Client
