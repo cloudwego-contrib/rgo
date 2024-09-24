@@ -282,3 +282,147 @@ idls:
 #### 效果展示
 
 ![show_emacs.png](./doc/show_emacs.png)
+
+
+
+### VIM
+
+#### 编译安装 rgo_lsp_server
+
+```shell
+go install cmd/rgo_lsp_server
+```
+
+
+
+#### 在根目录下新建配置文件 rgo_config.yaml
+
+新建一个项目，在 rgo_config.yaml 中添加配置，示例如下：
+
+```yaml
+idl_repos:
+  - repo_name: kitex_example
+    git_url: https://github.com/cloudwego/kitex-examples.git
+    branch: main
+    commit: 
+idls:
+  - idl_path: hello/hello.thrift
+    repo_name: kitex_example
+    service_name: a.b.c
+
+```
+
+
+
+#### 配置 GOPACKAGESDRIVER
+
+配置临时变量：
+
+```bash
+export GOPACKAGESDRIVER="$(go env GOPATH)/bin/rgopackagesdriver"
+```
+
+
+
+#### 配置 rgo_lsp_server
+
+为了使用 lsp，最简易的方式是使用 coc.nvim 插件
+
+
+
+安装 vim-plug
+
+```
+curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+
+
+
+vim 在 ~/.vimrc ( Neovim 在 ~/.config/nvim/init.vim) 文件中添加以下配置
+
+```.vimrc
+call plug#begin('~/.vim/plugged')
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+call plug#end()
+```
+
+ 
+
+执行命令安装插件
+
+```
+:PlugInstall
+```
+
+
+
+创建项目维度配置文件
+
+```bash
+mkdir .vim
+
+cd ./.vim
+
+touch coc-settings.json
+```
+
+
+
+添加 rgo_lsp_server 的配置
+
+```json
+{
+  "languageserver": {
+    "rgo": {
+      "command": "your/local/gopath/bin/rgo_lsp_server",
+      "rootPatterns": ["go.mod"],
+      "trace.server": "verbose",
+      "filetypes": ["go"]
+    }
+  }
+}
+
+```
+
+
+
+#### 配置通知事件
+
+以下是一个通过 coc.nvim 的事件监听功能配置通知事件的示例配置：
+
+```lua
+" 在你的 .vimrc 或 init.vim 中添加以下内容
+
+" 定义函数来处理 LSP 通知
+function! RgoRestartLanguageServer()
+    call CocAction('runCommand', 'custom/rgo/restart_language_server')
+endfunction
+
+function! RgoShowWindow(params)
+    let message = type(a:params) ==# 'dict' ? json_encode(a:params) : a:params
+    call coc#ui#show_info(message)
+endfunction
+
+" 监听 LSP 通知事件
+function! OnLspNotification(method, params)
+    if a:method ==# 'custom/rgo/restart_language_server'
+        call RgoRestartLanguageServer()
+    elseif a:method ==# 'custom/rgo/window_show'
+        call RgoShowWindow(a:params)
+    endif
+endfunction
+
+" 注册事件监听
+augroup lsp_notifications
+    autocmd!
+    autocmd User CocNotification call OnLspNotification(get(a:event, 'method'), get(a:event, 'params'))
+augroup END
+
+```
+
+
+
+#### 效果展示
+
+![show_vim.png](./doc/show_vim.png)
