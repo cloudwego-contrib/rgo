@@ -4,7 +4,17 @@ RGO 目前处于 MVP 阶段
 
 # 运行步骤
 
-目前 RGO 需要运行的组件有 VS-Code 插件和 gopackagesdriver 两个组件。
+目前 RGO 需要运行的组件有 ：
+
+- rgo_lsp_server —— lsp 插件
+- rgopackagesdriver —— GOPACKAGESDRIVER 组件
+- rgo —— 编译期运行命令行工具
+
+目前支持 rgo_lsp_server 的 IDE 有：
+
+- VS-Code
+- Emacs
+- VIM/Neovim
 
 VS-Code 插件因为还未发布，所以目前只能在 VS-Code 本地调试运行。
 
@@ -26,14 +36,6 @@ go install
 cd ../..
 ```
 
-## 编译生成 rgo_lsp_server
-
-```shell
-cd cmd/rgo_lsp_server && go build -o rgo_lsp_server .
-mv rgo_lsp_server ../../ide_extensions/rgo_vscode/bin/
-cd ../..
-```
-
 ## 编译安装 rgo
 
 ```shell
@@ -41,7 +43,19 @@ cd cmd/rgo && go install
 cd ../..
 ```
 
-## 在 VS-Code 中调试运行插件
+## 配置 rgo_lsp_server
+
+### VS-Code
+
+#### 编译生成 rgo_lsp_server
+
+```shell
+cd cmd/rgo_lsp_server && go build -o rgo_lsp_server .
+mv rgo_lsp_server ../../ide_extensions/rgo_vscode/bin/
+cd ../..
+```
+
+#### 在 VS-Code 中调试运行插件
 
 在 VS-Code 中打开克隆下来的 ide_extensions/rgo_vscode 项目
 
@@ -71,7 +85,7 @@ npm install
 
 ![edit_ide.png](doc/vscode-extension.png)
 
-## 新建测试项目
+#### 新建测试项目
 
 然后会弹出搭载了 go-lsp 插件的 vscode 窗口，新建一个新的项目用于展示效果
 
@@ -80,7 +94,7 @@ mkdir -p ~/rgo_test
 cd ~/rgo_test
 ```
 
-## 在根目录下新建配置文件 rgo_config.yaml
+#### 在根目录下新建配置文件 rgo_config.yaml
 
 ```yaml
 idl_repos:
@@ -95,7 +109,7 @@ idls:
 
 ```
 
-## 修改 VS-Code 配置
+#### 修改 VS-Code 配置
 
 ```shell
 vim .vscode/settings.json
@@ -134,19 +148,15 @@ vim .vscode/settings.json
 
 ```
 
-## 效果展示
+#### vscode 插件
 
-![show.png](doc/show.png)
-
-# vscode 插件
-
-## 支持功能
+##### 支持功能
 
 - [x] rgo_config.yml 配置文件解析智能提示
 - [x] 自动预下载 `rgo_lsp_server` && `rgopackagesdriver`
 - [x] 支持**消费**配置中的 idls, 做到无侵入的代码提示
 
-## 支持 vscode 配置
+##### 支持 vscode 配置
 
 - `rgo.useLanguageServer`, 默认为 `true`, 用于控制是否开启 rgo language server，关闭后将不会有任何提示
 - `rgo.languageServerInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgo_lsp_server@latest`, 用于配置
@@ -154,16 +164,121 @@ vim .vscode/settings.json
 - `rgo.gopackagesdriverInstall`, 默认为 `go install github.com/cloudwego-contrib/cmd/rgopackagesdriver@latest`, 用于配置
   rgopackagesdriver 的安装命令
 
-## 支持的 vscode 命令
+##### 支持的 vscode 命令
 
 - `RGo: Install language server`, 用于安装 rgo_lsp_server
 - `RGo: Install gopackagesdriver`, 用于安装 rgopackagesdriver
 - `RGo: Restart language server`, 用于重启 rgo_lsp_server
 
-# Tips:
-
-1. 因为官方 gopls 存在解析缓存问题，所以在 RGO 代码变更后目前无法第一时间获取变更依赖。
-
-暂时的解决方案是用户自行通过 command + shift + p 重启 gopls 刷新依赖或者 command + 鼠标左键进入 RGO 的代码强制刷新。
-
 ![restart_gopls.png](doc/restart_gopls.png)
+
+#### 效果展示
+
+![show.png](doc/show_vscode.png)
+
+
+
+### Emacs
+
+#### 编译安装 rgo_lsp_server
+
+```shell
+go install cmd/rgo_lsp_server
+```
+
+
+
+#### 在根目录下新建配置文件 rgo_config.yaml
+
+新建一个项目，在 rgo_config.yaml 中添加配置，示例如下：
+
+```yaml
+idl_repos:
+  - repo_name: kitex_example
+    git_url: https://github.com/cloudwego/kitex-examples.git
+    branch: main
+    commit: 
+idls:
+  - idl_path: hello/hello.thrift
+    repo_name: kitex_example
+    service_name: a.b.c
+
+```
+
+
+
+#### 配置 GOPACKAGESDRIVER
+
+调用 M-x [add-dir-local-variable](http://doc.endlessparentheses.com/Fun/add-dir-local-variable) 创建局部配置
+
+
+
+添加以下配置：
+
+```lua
+((go-mode . ((eval . (setenv "GOPACKAGESDRIVER" (concat (getenv "GOPATH") "/bin/rgopackagesdriver"))))))
+```
+
+
+
+#### 配置 rgo_lsp_server
+
+添加以下配置：
+
+```lua
+(use-package lsp-mode
+  :ensure t
+  :hook (go-mode . lsp)
+  :config
+  (setq lsp-keymap-prefix "C-c l")  
+
+  ;; register rgo_lsp_server
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection 
+                     (list (concat (getenv "GOPATH") "/bin/rgo_lsp_server")))
+    :major-modes '(go-mode)
+    :server-id 'rgo-lsp)))
+
+
+```
+
+
+
+#### 配置通知事件
+
+在 Emacs 中，我们需要定义一个函数来重新启动 LSP 服务器。
+
+```lua
+(defun my-restart-go-language-server ()
+  "Restart the Go language server."
+  (interactive)
+  (lsp-restart-workspace))
+
+(lsp-register-custom-notification-handler
+ "custom/rgo/restart_language_server"
+ #'my-restart-go-language-server)
+
+```
+
+
+
+除此之外，还可以定义消息通知函数
+
+```lua
+(defun my-show-window-message (params)
+  "Show a window message from custom notification."
+  (let ((message (if (hash-table-p params)
+                     (json-encode params)
+                   params)))
+    (message "%s" message)))  ; show in Emacs mini-buffer
+
+(lsp-register-custom-notification-handler
+ "custom/rgo/window_show"
+ #'my-show-window-message)
+
+```
+
+#### 效果展示
+
+![show_emacs.png](./doc/show_emacs.png)
