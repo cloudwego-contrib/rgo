@@ -21,26 +21,57 @@ import (
 
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
-	plugin2 "github.com/cloudwego/thriftgo/plugin"
-	"github.com/cloudwego/thriftgo/sdk"
 	"github.com/urfave/cli/v2"
 )
 
 func RunThriftgoCommand(c *cli.Context) error {
+	//pwd := c.String(consts.PwdFlag)
+	//module := c.String(consts.ModuleFlag)
+	//serviceName := c.String(consts.ServiceNameFlag)
+	//formatServiceName := c.String(consts.FormatServiceNameFlag)
+	//thriftgoCustomArgs := c.StringSlice(consts.ThriftgoCustomArgsFlag)
+	//
+	//rgoPlugin, err := plugin.GetRGOThriftgoPlugin(pwd, module, serviceName, formatServiceName, nil)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = sdk.RunThriftgoAsSDK(pwd, []plugin2.SDKPlugin{rgoPlugin}, thriftgoCustomArgs...)
+	//if err != nil {
+	//	return fmt.Errorf("thriftgo execution failed: %v", err)
+	//}
+
+	pwd := c.String(consts.PwdFlag)
+	module := c.String(consts.ModuleFlag)
+	//serviceName := c.String(consts.ServiceNameFlag)
+	//formatServiceName := c.String(consts.FormatServiceNameFlag)
+	idlPath := c.String(consts.IDLPathFlag)
+	kitexCustomArgs := c.StringSlice(consts.ThriftgoCustomArgsFlag)
+
+	err := generateKitexGen(pwd, module, idlPath, kitexCustomArgs)
+	if err != nil {
+		return fmt.Errorf("failed to generate rgo code:%v", err)
+	}
+
+	return nil
+}
+
+func RunKitexCommand(c *cli.Context) error {
 	pwd := c.String(consts.PwdFlag)
 	module := c.String(consts.ModuleFlag)
 	serviceName := c.String(consts.ServiceNameFlag)
 	formatServiceName := c.String(consts.FormatServiceNameFlag)
-	thriftgoCustomArgs := c.StringSlice(consts.ThriftgoCustomArgsFlag)
+	idlPath := c.String(consts.IDLPathFlag)
+	kitexCustomArgs := c.StringSlice(consts.ThriftgoCustomArgsFlag)
 
-	rgoPlugin, err := plugin.GetRGOThriftgoPlugin(pwd, module, serviceName, formatServiceName, nil)
+	rgoPlugin, err := plugin.GetRGOKitexPlugin(pwd, module, serviceName, formatServiceName, nil)
 	if err != nil {
 		return err
 	}
 
-	err = sdk.RunThriftgoAsSDK(pwd, []plugin2.SDKPlugin{rgoPlugin}, thriftgoCustomArgs...)
+	err = generateKitexGen(pwd, module, idlPath, kitexCustomArgs, rgoPlugin)
 	if err != nil {
-		return fmt.Errorf("thriftgo execution failed: %v", err)
+		return fmt.Errorf("failed to generate rgo code:%v", err)
 	}
 
 	return nil

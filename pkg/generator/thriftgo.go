@@ -27,13 +27,10 @@ import (
 )
 
 func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
-	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
+	//outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
 	customArgs := []string{
-		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(module, "kitex_gen")),
-		"-o", outputDir,
-		"--recurse",
-		idlPath,
+		"--thrift", "template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(module, "kitex_gen")),
 	}
 
 	args := []string{
