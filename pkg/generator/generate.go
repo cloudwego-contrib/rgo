@@ -238,13 +238,13 @@ func (rg *RGOGenerator) generateSrcCode() {
 				rlog.Errorf("Failed to add module to go.work: %v", err)
 				return
 			}
-		}
-	}
 
-	err := utils.RunGoWorkSync()
-	if err != nil {
-		rlog.Errorf("Failed to run go work sync: %v", err)
-		return
+			err := utils.RunGoWorkSync()
+			if err != nil {
+				rlog.Errorf("Failed to run go work sync: %v", err)
+				return
+			}
+		}
 	}
 }
 

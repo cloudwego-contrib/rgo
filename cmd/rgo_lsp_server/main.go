@@ -24,9 +24,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/TobiasYin/go-lsp/lsp"
-	"github.com/TobiasYin/go-lsp/lsp/defines"
-
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"go.uber.org/zap"
 )
@@ -37,10 +34,6 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	server = lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
-		TriggerCharacters: &[]string{"."},
-	}})
-
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -48,6 +41,8 @@ func main() {
 				rlog.Error("Recovered from panic in RGORun", zap.Any("error", r), zap.String("stack_trace", stackTrace))
 			}
 		}()
+
+		time.Sleep(1 * time.Second)
 
 		RGORun(ctx)
 	}()

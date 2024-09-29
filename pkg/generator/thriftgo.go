@@ -18,32 +18,41 @@ package generator
 
 import (
 	"fmt"
+	"os/exec"
 	"path/filepath"
 
-	plugin2 "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
+
 	"github.com/cloudwego/thriftgo/parser"
-	"github.com/cloudwego/thriftgo/plugin"
-	"github.com/cloudwego/thriftgo/sdk"
 )
 
 func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
 	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
 
-	args := []string{
+	customArgs := []string{
 		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(module, "kitex_gen")),
 		"-o", outputDir,
 		"--recurse",
 		idlPath,
 	}
 
-	rgoPlugin, err := plugin2.GetRGOThriftgoPlugin(rgoSrcPath, module, serviceName, formatServiceName, nil)
-	if err != nil {
-		return err
+	args := []string{
+		"thriftgo",
+		fmt.Sprintf("--%s", consts.PwdFlag), rgoSrcPath,
+		fmt.Sprintf("--%s", consts.ModuleFlag), module,
+		fmt.Sprintf("--%s", consts.ServiceNameFlag), serviceName,
+		fmt.Sprintf("--%s", consts.FormatServiceNameFlag), formatServiceName,
+		fmt.Sprintf("--%s", consts.IDLPathFlag), idlPath,
 	}
 
-	err = sdk.RunThriftgoAsSDK(rgoSrcPath, []plugin.SDKPlugin{rgoPlugin}, args...)
-	if err != nil {
-		return fmt.Errorf("thriftgo execution failed: %v", err)
+	for _, customArg := range customArgs {
+		args = append(args, fmt.Sprintf("--%s", consts.ThriftgoCustomArgsFlag), customArg)
+	}
+
+	cmd := exec.Command("rgo", args...)
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("error generate rgo base code: %v", err)
 	}
 
 	return nil

@@ -59,7 +59,7 @@ func RunLspServer(cancel context.CancelFunc) {
 		cancel()
 	}()
 
-	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
+	server = lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
 
