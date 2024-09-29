@@ -18,6 +18,8 @@ package main
 
 import (
 	"context"
+	"github.com/TobiasYin/go-lsp/lsp"
+	"github.com/TobiasYin/go-lsp/lsp/defines"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -33,6 +35,10 @@ func main() {
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	server = lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
+		TriggerCharacters: &[]string{"."},
+	}})
 
 	go func() {
 		defer func() {
