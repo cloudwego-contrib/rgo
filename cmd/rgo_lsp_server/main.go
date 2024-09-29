@@ -18,13 +18,14 @@ package main
 
 import (
 	"context"
-	"github.com/TobiasYin/go-lsp/lsp"
-	"github.com/TobiasYin/go-lsp/lsp/defines"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
 	"time"
+
+	"github.com/TobiasYin/go-lsp/lsp"
+	"github.com/TobiasYin/go-lsp/lsp/defines"
 
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"go.uber.org/zap"
