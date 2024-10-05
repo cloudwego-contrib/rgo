@@ -40,7 +40,7 @@ func RunThriftgoCommand(c *cli.Context) error {
 
 	err = sdk.RunThriftgoAsSDK(pwd, []plugin2.SDKPlugin{rgoPlugin}, thriftgoCustomArgs...)
 	if err != nil {
-		return fmt.Errorf("thriftgo execution failed: %v", err)
+		return err
 	}
 
 	return nil

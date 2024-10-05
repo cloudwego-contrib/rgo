@@ -49,8 +49,6 @@ func main() {
 			}
 		}()
 
-		time.Sleep(1 * time.Second)
-
 		RGORun(ctx)
 	}()
 

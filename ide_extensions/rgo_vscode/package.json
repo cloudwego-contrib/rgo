@@ -3,7 +3,7 @@
   "name": "rgo-language-server",
   "description": "A language server for the Go language",
   "author": "CloudWeGo",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "version": "1.0.0",
   "repository": {
     "type": "git"
