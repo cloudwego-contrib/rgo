@@ -18,11 +18,12 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/urfave/cli/v2"
 
