@@ -45,3 +45,24 @@ func RunThriftgoCommand(c *cli.Context) error {
 
 	return nil
 }
+
+func RunKitexCommand(c *cli.Context) error {
+	pwd := c.String(consts.PwdFlag)
+	module := c.String(consts.ModuleFlag)
+	serviceName := c.String(consts.ServiceNameFlag)
+	formatServiceName := c.String(consts.FormatServiceNameFlag)
+	idlPath := c.String(consts.IDLPathFlag)
+	kitexCustomArgs := c.StringSlice(consts.KitexArgsFlag)
+
+	rgoPlugin, err := plugin.GetRGOKitexPlugin(pwd, module, serviceName, formatServiceName, nil)
+	if err != nil {
+		return err
+	}
+
+	err = generateKitexGen(pwd, module, idlPath, kitexCustomArgs, rgoPlugin)
+	if err != nil {
+		return fmt.Errorf("failed to generate rgo code:%v", err)
+	}
+
+	return nil
+}

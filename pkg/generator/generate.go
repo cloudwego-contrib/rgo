@@ -216,6 +216,8 @@ func (rg *RGOGenerator) generateSrcCode() {
 		}
 	}
 
+	var eg errgroup.Group
+
 	idls := rg.rgoConfig.IDLs
 	for _, idl := range idls {
 		if _, ok := changedRepoCommit.Load(idl.RepoName); !ok {
@@ -225,26 +227,38 @@ func (rg *RGOGenerator) generateSrcCode() {
 
 		idlPath := filepath.Join(rg.RGOBasePath, consts.IDLPath, idl.RepoName, idl.IDLPath)
 
-		err := rg.GenerateRGOCode(idl.ServiceName, idl.FormatServiceName, idlPath, srcPath)
-		if err != nil {
-			rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
-			return
-		}
+		idl := idl
 
-		if !rg.isGoPackagesDriver {
-			rlog.Info(srcPath)
-			err = utils.AddModuleToGoWork(srcPath)
+		eg.Go(func() error {
+			err := rg.GenerateRGOCode(idl.ServiceName, idl.FormatServiceName, idlPath, srcPath)
 			if err != nil {
-				rlog.Errorf("Failed to add module to go.work: %v", err)
-				return
+				rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
+				return err
 			}
 
-			err := utils.RunGoWorkSync()
-			if err != nil {
-				rlog.Errorf("Failed to run go work sync: %v", err)
-				return
+			if !rg.isGoPackagesDriver {
+				rlog.Info(srcPath)
+				err = utils.AddModuleToGoWork(srcPath)
+				if err != nil {
+					rlog.Errorf("Failed to add module to go.work: %v", err)
+					return err
+				}
+
+				err = utils.RunGoWorkSync()
+				if err != nil {
+					rlog.Errorf("Failed to run go work sync: %v", err)
+					return err
+				}
 			}
-		}
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		rlog.Errorf("Failed to process all idls: %v", err)
+		return
+	} else {
+		rlog.Info("Success to process all idls")
 	}
 }
 
