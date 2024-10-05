@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
+	thrift_plugin "github.com/cloudwego-contrib/rgo/pkg/generator/plugin"
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/cloudwego/kitex/tool/cmd/kitex/sdk"
 	"github.com/cloudwego/thriftgo/plugin"
@@ -55,7 +55,7 @@ func InitConfig() error {
 
 	rgoBasePath = filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	c, err = config.ReadConfig(consts.RGOConfigPath)
+	c, err = config.ReadConfig(idlConfigPath)
 	if err != nil {
 		panic(err)
 	}
@@ -113,23 +113,14 @@ func GenerateRGOCode() error {
 
 				module := strings.ReplaceAll(c.ProjectModule, consts.RGOServiceName, c.IDLs[k].FormatServiceName)
 
-				args := []string{
-					"kitex",
-					fmt.Sprintf("--%s", consts.PwdFlag), path,
-					fmt.Sprintf("--%s", consts.ModuleFlag), module,
-					fmt.Sprintf("--%s", consts.ServiceNameFlag), c.IDLs[k].ServiceName,
-					fmt.Sprintf("--%s", consts.FormatServiceNameFlag), c.IDLs[k].FormatServiceName,
-					fmt.Sprintf("--%s", consts.IDLPathFlag), idlPath,
+				rgoPlugin, err := thrift_plugin.GetRGOKitexPlugin(path, module, c.IDLs[k].ServiceName, c.IDLs[k].FormatServiceName, nil)
+				if err != nil {
+					return err
 				}
 
-				for _, customArg := range kitexCustomArgs.Value() {
-					args = append(args, fmt.Sprintf("--%s", consts.KitexArgsFlag), customArg)
-				}
-
-				cmd := exec.Command("rgo", args...)
-
-				if err = cmd.Run(); err != nil {
-					return fmt.Errorf("error generate rgo kitex_gen code: %v", err)
+				err = generateKitexGen(path, module, idlPath, kitexCustomArgs.Value(), rgoPlugin)
+				if err != nil {
+					return fmt.Errorf("failed to generate rgo code:%v", err)
 				}
 
 				if isGoPackagesDriver {

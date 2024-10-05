@@ -94,19 +94,6 @@ func Init() *cli.App {
 			},
 			Action: RunThriftgoCommand,
 		},
-		{
-			Name:  KitexName,
-			Usage: KitexUsage,
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: consts.PwdFlag, Aliases: []string{"p"}, Usage: "rgo kitex pwd"},
-				&cli.StringFlag{Name: consts.ModuleFlag, Aliases: []string{"m"}, Usage: "rgo kitex module"},
-				&cli.StringFlag{Name: consts.ServiceNameFlag, Aliases: []string{"s"}, Usage: "rgo kitex service_name"},
-				&cli.StringFlag{Name: consts.FormatServiceNameFlag, Aliases: []string{"fs"}, Usage: "rgo kitex format_service_name"},
-				&cli.StringFlag{Name: consts.IDLPathFlag, Aliases: []string{"i"}, Usage: "rgo kitex idl_path"},
-				&cli.StringSliceFlag{Name: consts.KitexArgsFlag, Aliases: []string{"k"}, Usage: "Kitex custom args"},
-			},
-			Action: RunKitexCommand,
-		},
 	}
 	return app
 }
@@ -141,12 +128,5 @@ Examples:
 Examples:
 	# run rgo thriftgo command
 	rgo thriftgo 
-`
-
-	KitexName  = "kitex"
-	KitexUsage = `run kitex cmd
-Examples:
-	# run rgo kitex command
-	rgo kitex 
 `
 )
