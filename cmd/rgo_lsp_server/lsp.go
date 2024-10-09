@@ -29,11 +29,7 @@ import (
 	"github.com/TobiasYin/go-lsp/lsp/defines"
 )
 
-var (
-	logPath string
-
-	server *lsp.Server
-)
+var logPath string
 
 func init() {
 	var logger *log.Logger
@@ -54,7 +50,7 @@ func init() {
 	logger = log.New(multiWriter, consts.RGOLsp, 0)
 }
 
-func RunLspServer(cancel context.CancelFunc) {
+func RunLspServer(cancel context.CancelFunc, server *lsp.Server) {
 	defer func() {
 		cancel()
 	}()

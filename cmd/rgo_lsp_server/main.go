@@ -37,7 +37,7 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	server = lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
+	server := lsp.NewServer(&lsp.Options{CompletionProvider: &defines.CompletionOptions{
 		TriggerCharacters: &[]string{"."},
 	}})
 
@@ -64,5 +64,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	RunLspServer(cancel)
+	RunLspServer(cancel, server)
 }
