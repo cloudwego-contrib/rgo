@@ -17,9 +17,15 @@
 package consts
 
 const (
-	TypeFlag      = "type"
-	ConfigFlag    = "config"
-	KitexArgsFlag = "kitex_args"
+	TypeFlag               = "type"
+	ConfigFlag             = "config"
+	KitexArgsFlag          = "kitex_args"
+	ThriftgoCustomArgsFlag = "thriftgo_args"
+	PwdFlag                = "pwd"
+	ModuleFlag             = "module"
+	ServiceNameFlag        = "service_name"
+	FormatServiceNameFlag  = "format_service_name"
+	IDLPathFlag            = "idl_path"
 )
 
 const (

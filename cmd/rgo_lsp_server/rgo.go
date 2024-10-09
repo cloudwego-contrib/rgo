@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
+	"github.com/TobiasYin/go-lsp/lsp"
+
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 	"github.com/cloudwego-contrib/rgo/pkg/generator"
@@ -33,7 +35,7 @@ import (
 
 var isRunning = make(chan struct{}, 1)
 
-func initConfig() *generator.RGOGenerator {
+func initConfig(server *lsp.Server) *generator.RGOGenerator {
 	var err error
 
 	currentPath, err := utils.GetProjectHashPathWithUnderline()
@@ -53,8 +55,8 @@ func initConfig() *generator.RGOGenerator {
 	return generator.NewRGOGenerator(server, c, rgoBasePath)
 }
 
-func RGORun(ctx context.Context) {
-	g := initConfig()
+func RGORun(ctx context.Context, server *lsp.Server) {
+	g := initConfig(server)
 
 	isRunning <- struct{}{}
 	defer func() {

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 
 	"github.com/cloudwego-contrib/rgo/pkg/config"
 )
@@ -60,7 +61,12 @@ func InitGoWork(modules ...string) error {
 	return nil
 }
 
+var mu sync.Mutex
+
 func AddModuleToGoWork(modules ...string) error {
+	mu.Lock()
+	defer mu.Unlock()
+
 	cmd := exec.Command("go", append([]string{"work", "use"}, modules...)...)
 
 	cmd.Stdout = os.Stdout
