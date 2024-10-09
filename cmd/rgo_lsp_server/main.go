@@ -49,7 +49,7 @@ func main() {
 			}
 		}()
 
-		RGORun(ctx)
+		RGORun(ctx, server)
 	}()
 
 	// gracefully shutdown
