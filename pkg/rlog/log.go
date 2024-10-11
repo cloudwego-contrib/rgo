@@ -17,18 +17,29 @@
 package rlog
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"time"
+
+	"github.com/TobiasYin/go-lsp/lsp"
+	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var logger *zap.Logger
+var (
+	logger    *zap.Logger
+	lspServer *lsp.Server
+)
 
-func InitLogger(logPath string) {
+type notification struct {
+	Message string `json:"message"`
+}
+
+func InitLogger(logPath string, server *lsp.Server) {
 	currentTime := time.Now().Format("2006-01-02")
 	logFileName := filepath.Join(logPath, fmt.Sprintf("%s.log", currentTime))
 
@@ -54,7 +65,9 @@ func InitLogger(logPath string) {
 	logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	defer logger.Sync()
 
-	logger.Info("test log info")
+	if server == nil {
+		lspServer = server
+	}
 }
 
 func Debug(s string, fields ...zap.Field) {
@@ -66,14 +79,20 @@ func Info(s string, fields ...zap.Field) {
 }
 
 func Warn(s string, fields ...zap.Field) {
+	str, _ := json.Marshal(notification{Message: s})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowWarn, str)
 	logger.Warn(s, fields...)
 }
 
 func Error(s string, fields ...zap.Field) {
+	str, _ := json.Marshal(notification{Message: s})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowError, str)
 	logger.Error(s, fields...)
 }
 
 func Fatal(s string, fields ...zap.Field) {
+	str, _ := json.Marshal(notification{Message: s})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowError, str)
 	logger.Fatal(s, fields...)
 }
 
@@ -86,13 +105,19 @@ func Infof(format string, args ...interface{}) {
 }
 
 func Warnf(format string, args ...interface{}) {
+	str, _ := json.Marshal(notification{Message: fmt.Sprintf(format, args...)})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowWarn, str)
 	logger.Sugar().Warnf(format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
+	str, _ := json.Marshal(notification{Message: fmt.Sprintf(format, args...)})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowError, str)
 	logger.Sugar().Errorf(format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
+	str, _ := json.Marshal(notification{Message: fmt.Sprintf(format, args...)})
+	_ = lspServer.SendNotification(consts.MethodRGOWindowShowError, str)
 	logger.Sugar().Fatalf(format, args...)
 }

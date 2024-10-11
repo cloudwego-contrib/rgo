@@ -25,6 +25,23 @@ const (
 )
 
 const (
-	MethodRGORestartLSP = "custom/rgo/restart_language_server"
-	MethodRGOWindowShow = "custom/rgo/window_show"
+	MethodRGORestartLSP      = "custom/rgo/restart_language_server"
+	MethodRGOWindowShowInfo  = "custom/rgo/window_show_info"
+	MethodRGOWindowShowWarn  = "custom/rgo/window_show_warn"
+	MethodRGOWindowShowError = "custom/rgo/window_show_error"
+	MethodRGOProgress        = "custom/rgo/progress"
+)
+
+const (
+	RGOProgressIDL = "rgo_progress_idl"
+	RGOProgressSrc = "rgo_progress_src"
+
+	RGOProgressStart = "start"
+	RGOProgressStop  = "stop"
+)
+
+const (
+	RGOProgressIDLNotification = "RGO fetching idl repos..."
+	RGOProgressSrcNotification = "RGO generating src code..."
+	RGOExecuteSuccessfully     = `{"message": "RGO executed successfully"}`
 )

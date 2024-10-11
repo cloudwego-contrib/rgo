@@ -45,7 +45,7 @@ func initConfig(server *lsp.Server) *generator.RGOGenerator {
 
 	rgoBasePath := filepath.Join(utils.GetDefaultUserPath(), consts.RGOBasePath, currentPath)
 
-	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOLsp))
+	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOLsp), server)
 
 	c, err := config.ReadConfig(consts.RGOConfigPath)
 	if err != nil {

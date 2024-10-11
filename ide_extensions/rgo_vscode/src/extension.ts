@@ -27,6 +27,7 @@ import {
   isGoCommandInstall
 } from "./download";
 import { registerCommands } from "./command";
+import {endianness} from "node:os";
 
 let client: LanguageClient;
 let rgoConfig: vscode.WorkspaceConfiguration = null;
@@ -100,10 +101,32 @@ export async function startRgoLspServer() {
     vscode.commands.executeCommand('go.languageserver.restart');
   });
 
-  client.onNotification('custom/rgo/window_show', (params) =>{
-    const message = typeof params === 'object' ? JSON.stringify(params) : params;
-
+  client.onNotification('custom/rgo/window_show_info', (params) =>{
+    const {message} = typeof params === 'object' ? params : {message: params.message};
+    
     vscode.window.showInformationMessage(message);
+  });
+
+  client.onNotification('custom/rgo/window_show_warn', (params) =>{
+    const {message} = typeof params === 'object' ? params : {message: params.message};
+
+    vscode.window.showWarningMessage(message);
+  });
+
+  client.onNotification('custom/rgo/window_show_error', (params) =>{
+    const {message} = typeof params === 'object' ? params : {message: params.message};
+
+    vscode.window.showErrorMessage(message);
+  });
+
+  client.onNotification('custom/rgo/progress', (params) => {
+    const { id, message,type } = typeof params === 'object' ? params : { id: params.id, message: params.message, type:params.type };
+
+    if (type=='start'){
+        progressManager.startProgress(id,message);
+    }else if (type=='stop'){
+        progressManager.stopProgress(id);
+    }
   });
 
   await client.start().then(() => {
@@ -111,6 +134,43 @@ export async function startRgoLspServer() {
   });
 
 }
+
+const progressManager = {
+  progressPromises: {},
+  activeProgress: {},
+
+  startProgress(id: string | number, message: any) {
+    if (this.progressPromises[id]) {
+      return;
+    }
+
+    this.activeProgress[id] = { isProgressActive: true };
+
+    this.progressPromises[id] = vscode.window.withProgress({
+      location: vscode.ProgressLocation.Window,
+      title: message,
+      cancellable: false
+    }, async (progress, token) => {
+
+      token.onCancellationRequested(() => {
+        this.stopProgress(id);
+      });
+
+      while (this.activeProgress[id]) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    });
+  },
+
+  stopProgress(id: string | number) {
+    if (this.progressPromises[id]) {
+
+      delete this.progressPromises[id];
+      delete this.activeProgress[id];
+    }
+  }
+};
+
 
 export function deactivate(): Thenable<void> | undefined {
   if (!client) {
