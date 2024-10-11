@@ -44,6 +44,12 @@ type RGOGenerator struct {
 	LspServer          *lsp.Server
 }
 
+type RGONotification struct {
+	ID      string `json:"id"`
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
 func NewRGOGenerator(lspServer *lsp.Server, rgoConfig *config.RGOConfig, rgoBasePath string) *RGOGenerator {
 	var isGoPackagesDriver bool
 
@@ -87,9 +93,40 @@ func (rg *RGOGenerator) Run() {
 		}
 	}()
 
+	err := rg.NotifyRGOProgressStart(consts.RGOProgressIDL, consts.RGOProgressIDLNotification)
+	if err != nil {
+		rlog.Errorf("Failed to send notification start progress: %v", err)
+		return
+	}
+
 	rg.generateRepoCode()
 
+	err = rg.NotifyRGOProgressStop(consts.RGOProgressIDL)
+	if err != nil {
+		rlog.Errorf("Failed to send notification stop progress: %v", err)
+		return
+	}
+
+	err = rg.NotifyRGOProgressStart(consts.RGOProgressSrc, consts.RGOProgressSrcNotification)
+	if err != nil {
+		rlog.Errorf("Failed to send notification start progress: %v", err)
+		return
+	}
+
 	rg.generateSrcCode()
+
+	err = rg.NotifyRGOProgressStop(consts.RGOProgressSrc)
+	if err != nil {
+		rlog.Errorf("Failed to send notification stop progress: %v", err)
+		return
+	}
+
+	rlog.Info("RGO executed successfully")
+	err = rg.sendNotification(consts.MethodRGOWindowShowInfo, []byte(consts.RGOExecuteSuccessfully))
+	if err != nil {
+		rlog.Errorf("Failed to send notification executed successfully: %v", err)
+		return
+	}
 }
 
 func (rg *RGOGenerator) sendNotification(method string, params json.RawMessage) error {
@@ -316,4 +353,36 @@ func (rg *RGOGenerator) updateRGORepoCommit(repoName, newCommit string) error {
 	}
 
 	return config.RewriteRGOConfig("idl_repos", res)
+}
+
+func (rg *RGOGenerator) NotifyRGOProgressStart(id, message string) error {
+	msg, err := json.Marshal(RGONotification{
+		ID:      id,
+		Message: message,
+		Type:    consts.RGOProgressStart,
+	})
+	if err != nil {
+		return err
+	}
+	err = rg.sendNotification(consts.MethodRGOProgress, msg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rg *RGOGenerator) NotifyRGOProgressStop(id string) error {
+	msg, err := json.Marshal(RGONotification{
+		ID:   id,
+		Type: consts.RGOProgressStop,
+	})
+	if err != nil {
+		return err
+	}
+	err = rg.sendNotification(consts.MethodRGOProgress, msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }

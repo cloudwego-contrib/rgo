@@ -96,7 +96,7 @@ func main() {
 	ctx, cancel := signalContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOPackagesDriver))
+	rlog.InitLogger(filepath.Join(rgoBasePath, consts.LogPath, consts.RGOPackagesDriver), nil)
 
 	if err := run(ctx, os.Stdin, os.Stdout, os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err)
