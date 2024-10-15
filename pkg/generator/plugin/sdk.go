@@ -36,35 +36,120 @@ func strToPointer(str string) *string {
 	return &str
 }
 
-func GetRGOKitexPlugin(pwd, projectModule, serviceName, formatServiceName string, Args []string) (*RGOKitexPlugin, error) {
-	rgoPlugin := &RGOKitexPlugin{}
-
-	rgoPlugin.Pwd = pwd
-	rgoPlugin.ProjectModule = projectModule
-	rgoPlugin.ServiceName = serviceName
-	rgoPlugin.FormatServiceName = formatServiceName
-	rgoPlugin.Args = Args
+func GetRGOPlugin(pluginType, pwd, projectModule, serviceName, formatServiceName string) (*RGOPlugin, error) {
+	rgoPlugin := &RGOPlugin{
+		Type:              pluginType,
+		Pwd:               pwd,
+		ProjectModule:     projectModule,
+		ServiceName:       serviceName,
+		FormatServiceName: formatServiceName,
+	}
 
 	return rgoPlugin, nil
 }
 
-type RGOKitexPlugin struct {
-	Args              []string
+type RGOPlugin struct {
+	Type              string
 	ProjectModule     string
 	ServiceName       string
 	FormatServiceName string
 	Pwd               string
 }
 
-func (r *RGOKitexPlugin) GetName() string {
+func (r *RGOPlugin) GetName() string {
 	return r.ProjectModule
 }
 
-func (r *RGOKitexPlugin) GetPluginParameters() []string {
-	return r.Args
+func (r *RGOPlugin) GetPluginParameters() []string {
+	return nil
 }
 
-func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
+func (r *RGOPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
+	switch r.Type {
+	case consts.EditPeriod:
+		return r.generateEditClientTemplateData(req)
+	case consts.BuildPeriod:
+		return r.generateBuildClientTemplateData(req)
+	}
+	return nil
+}
+
+func (r *RGOPlugin) generateEditClientTemplateData(req *plugin.Request) (res *plugin.Response) {
+	formatServiceName := r.FormatServiceName
+	serviceName := r.ServiceName
+
+	thrift := req.AST
+
+	for k := range thrift.Services {
+		for i := range thrift.Services[k].Functions {
+			thrift.Services[k].Functions[i].Name = cases.Title(language.Und).String(thrift.Services[k].Functions[i].Name)
+		}
+	}
+
+	templateData, err := r.buildClientTemplateData(serviceName, formatServiceName, thrift)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to build client template data: %v", err)),
+		}
+	}
+
+	// Render the client template using the extracted data
+	renderedCode, err := RenderEditClientTemplate(templateData)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to render ast file: %v", err)),
+		}
+	}
+
+	exist, err := utils.FileExistsInPath(r.Pwd, consts.GoMod)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(err.Error()),
+		}
+	}
+
+	if !exist {
+		err = os.MkdirAll(r.Pwd, os.ModePerm)
+		if err != nil {
+			return &plugin.Response{
+				Error: strToPointer(fmt.Sprintf("failed to create directory: %v", err)),
+			}
+		}
+
+		err = utils.InitGoMod(r.ProjectModule, r.Pwd)
+		if err != nil {
+			return &plugin.Response{
+				Error: strToPointer(err.Error()),
+			}
+		}
+	}
+
+	outputFile, err := os.Create(filepath.Join(r.Pwd, "rgo_cli.go"))
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to create file: %v", err)),
+		}
+	}
+	defer outputFile.Close()
+
+	_, err = outputFile.WriteString(renderedCode)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to write render code to file: %v", err)),
+		}
+	}
+
+	err = utils.RunGoModTidyInDir(r.Pwd)
+	if err != nil {
+		return &plugin.Response{
+			Error: strToPointer(fmt.Sprintf("failed to go mod tidy: %v", err)),
+		}
+	}
+
+	return &plugin.Response{}
+}
+
+func (r *RGOPlugin) generateBuildClientTemplateData(req *plugin.Request) (res *plugin.Response) {
 	formatServiceName := r.FormatServiceName
 	serviceName := r.ServiceName
 
@@ -139,7 +224,7 @@ func (r *RGOKitexPlugin) Invoke(req *plugin.Request) (res *plugin.Response) {
 	return &plugin.Response{}
 }
 
-func (r *RGOKitexPlugin) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
+func (r *RGOPlugin) buildClientTemplateData(serviceName, formatServiceName string, thriftFile *parser.Thrift) (*config.RGOClientTemplateData, error) {
 	data := &config.RGOClientTemplateData{
 		RGOModuleName:     r.ProjectModule,
 		ServiceName:       serviceName,

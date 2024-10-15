@@ -31,16 +31,24 @@ func RunThriftgoCommand(c *cli.Context) error {
 	module := c.String(consts.ModuleFlag)
 	serviceName := c.String(consts.ServiceNameFlag)
 	formatServiceName := c.String(consts.FormatServiceNameFlag)
+	pluginType := c.String(consts.PluginTypeFlag)
 	thriftgoCustomArgs := c.StringSlice(consts.ThriftgoCustomArgsFlag)
 
-	rgoPlugin, err := plugin.GetRGOThriftgoPlugin(pwd, module, serviceName, formatServiceName, nil)
-	if err != nil {
-		return err
-	}
+	if pluginType == "" {
+		err := sdk.RunThriftgoAsSDK(pwd, nil, thriftgoCustomArgs...)
+		if err != nil {
+			return err
+		}
+	} else {
+		rgoPlugin, err := plugin.GetRGOPlugin(pluginType, pwd, module, serviceName, formatServiceName)
+		if err != nil {
+			return err
+		}
+		err = sdk.RunThriftgoAsSDK(pwd, []plugin2.SDKPlugin{rgoPlugin}, thriftgoCustomArgs...)
+		if err != nil {
+			return err
+		}
 
-	err = sdk.RunThriftgoAsSDK(pwd, []plugin2.SDKPlugin{rgoPlugin}, thriftgoCustomArgs...)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -52,9 +60,13 @@ func RunKitexCommand(c *cli.Context) error {
 	serviceName := c.String(consts.ServiceNameFlag)
 	formatServiceName := c.String(consts.FormatServiceNameFlag)
 	idlPath := c.String(consts.IDLPathFlag)
+	pluginType := c.String(consts.PluginTypeFlag)
 	kitexCustomArgs := c.StringSlice(consts.KitexArgsFlag)
 
-	rgoPlugin, err := plugin.GetRGOKitexPlugin(pwd, module, serviceName, formatServiceName, nil)
+	var rgoPlugin plugin2.SDKPlugin
+	var err error
+
+	rgoPlugin, err = plugin.GetRGOPlugin(pluginType, pwd, module, serviceName, formatServiceName)
 	if err != nil {
 		return err
 	}

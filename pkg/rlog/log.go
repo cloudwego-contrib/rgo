@@ -65,7 +65,7 @@ func InitLogger(logPath string, server *lsp.Server) {
 	logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	defer logger.Sync()
 
-	if server == nil {
+	if server != nil {
 		lspServer = server
 	}
 }

@@ -18,6 +18,7 @@ package consts
 
 const (
 	TypeFlag               = "type"
+	PluginTypeFlag         = "type"
 	ConfigFlag             = "config"
 	KitexArgsFlag          = "kitex_args"
 	ThriftgoCustomArgsFlag = "thriftgo_args"
@@ -32,4 +33,9 @@ const (
 	VSCode       = "vscode"
 	VSCodeDir    = ".vscode"
 	SettingsJson = "settings.json"
+)
+
+const (
+	EditPeriod  = "edit"
+	BuildPeriod = "build"
 )
