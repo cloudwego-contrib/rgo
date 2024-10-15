@@ -19,7 +19,6 @@ package generator
 import (
 	"fmt"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
@@ -27,17 +26,20 @@ import (
 )
 
 func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, idlPath, rgoSrcPath string) error {
-	outputDir := filepath.Join(rgoSrcPath, "kitex_gen")
-
 	customArgs := []string{
-		"-g", "go:template=slim,gen_deep_equal=false,gen_setter=false,no_default_serdes,no_fmt" + fmt.Sprintf(",package_prefix=%s", filepath.Join(module, "kitex_gen")),
-		"-o", outputDir,
-		"--recurse",
+		"-frugal-pretouch",
+		"-thrift", "template=slim",
+		"-thrift", "frugal_tag",
+		"-thrift", "gen_deep_equal=false",
+		"-thrift", "gen_setter=false",
+		"-thrift", "no_default_serdes",
+		"-thrift", "no_fmt",
 		idlPath,
 	}
 
 	args := []string{
-		"thriftgo",
+		"kitex",
+		fmt.Sprintf("--%s", consts.PluginTypeFlag), consts.EditPeriod,
 		fmt.Sprintf("--%s", consts.PwdFlag), rgoSrcPath,
 		fmt.Sprintf("--%s", consts.ModuleFlag), module,
 		fmt.Sprintf("--%s", consts.ServiceNameFlag), serviceName,
@@ -46,7 +48,7 @@ func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, i
 	}
 
 	for _, customArg := range customArgs {
-		args = append(args, fmt.Sprintf("--%s", consts.ThriftgoCustomArgsFlag), customArg)
+		args = append(args, fmt.Sprintf("--%s", consts.KitexArgsFlag), customArg)
 	}
 
 	cmd := exec.Command("rgo", args...)

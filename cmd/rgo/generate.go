@@ -125,6 +125,7 @@ func GenerateRGOCode() error {
 
 					args := []string{
 						"kitex",
+						fmt.Sprintf("--%s", consts.PluginTypeFlag), consts.BuildPeriod,
 						fmt.Sprintf("--%s", consts.PwdFlag), path,
 						fmt.Sprintf("--%s", consts.ModuleFlag), module,
 						fmt.Sprintf("--%s", consts.ServiceNameFlag), c.IDLs[k].ServiceName,

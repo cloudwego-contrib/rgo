@@ -98,7 +98,8 @@ func Init() *cli.App {
 			Name:  KitexName,
 			Usage: KitexUsage,
 			Flags: []cli.Flag{
-				&cli.StringFlag{Name: consts.PwdFlag, Aliases: []string{"p"}, Usage: "rgo kitex pwd"},
+				&cli.StringFlag{Name: consts.PluginTypeFlag, Aliases: []string{"t"}, Usage: "rgo plugin type"},
+				&cli.StringFlag{Name: consts.PwdFlag, Aliases: []string{"pp"}, Usage: "rgo kitex pwd", Value: "."},
 				&cli.StringFlag{Name: consts.ModuleFlag, Aliases: []string{"m"}, Usage: "rgo kitex module"},
 				&cli.StringFlag{Name: consts.ServiceNameFlag, Aliases: []string{"s"}, Usage: "rgo kitex service_name"},
 				&cli.StringFlag{Name: consts.FormatServiceNameFlag, Aliases: []string{"fs"}, Usage: "rgo kitex format_service_name"},
