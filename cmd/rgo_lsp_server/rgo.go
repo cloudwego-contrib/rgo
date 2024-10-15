@@ -87,7 +87,6 @@ func WatchConfig(g *generator.RGOGenerator, ctx context.Context) {
 				<-isRunning
 			}()
 		default:
-			rlog.Warn("A config change is already being processed, skipping this event.")
 			return
 		}
 
