@@ -43,5 +43,5 @@ const (
 const (
 	RGOProgressIDLNotification = "RGO fetching idl repos..."
 	RGOProgressSrcNotification = "RGO generating src code..."
-	RGOExecuteSuccessfully     = `{"message": "RGO executed successfully"}`
+	RGOStartSuccessfully       = `{"message": "RGO started successfully"}`
 )
