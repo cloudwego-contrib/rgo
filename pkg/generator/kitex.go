@@ -18,9 +18,10 @@ package generator
 
 import (
 	"fmt"
+	"os/exec"
+
 	"github.com/cloudwego-contrib/rgo/pkg/rlog"
 	"go.uber.org/zap"
-	"os/exec"
 
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
