@@ -18,40 +18,35 @@ package utils
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
-func CloneGitRepo(repoURL, branch, path, commit string) error {
-	// clone repo
-	cmd := exec.Command("git", "clone", "-b", branch, "--single-branch", repoURL, path)
-
-	if err := cmd.Run(); err != nil {
+// CloneGitRepo automatically selects HTTP or SSH based on the repoURL and clones the repository
+func CloneGitRepo(path, commit string, opts *git.CloneOptions) error {
+	_, err := git.PlainClone(path, false, opts)
+	if err != nil {
 		return fmt.Errorf("failed to clone the repo: %v", err)
 	}
 
-	if commit == "" {
-		return nil
-	}
-
-	// checkout commit
-	cmd = exec.Command("git", "checkout", commit)
-	cmd.Dir = path
-
-	if err := cmd.Run(); err != nil {
-		// fetch commit
-		cmd = exec.Command("git", "fetch", "origin", commit)
-		cmd.Dir = path
-
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("failed to fetch the specified commit: %v", err)
+	// If a specific commit is provided, checkout that commit
+	if commit != "" {
+		repo, err := git.PlainOpen(path)
+		if err != nil {
+			return fmt.Errorf("failed to open the repo: %v", err)
 		}
 
-		cmd = exec.Command("git", "checkout", commit)
-		cmd.Dir = path
+		wt, err := repo.Worktree()
+		if err != nil {
+			return fmt.Errorf("failed to get the worktree: %v", err)
+		}
 
-		if err = cmd.Run(); err != nil {
+		err = wt.Checkout(&git.CheckoutOptions{
+			Hash: plumbing.NewHash(commit),
+		})
+		if err != nil {
 			return fmt.Errorf("failed to checkout the specified commit: %v", err)
 		}
 	}
@@ -59,37 +54,44 @@ func CloneGitRepo(repoURL, branch, path, commit string) error {
 	return nil
 }
 
-func UpdateGitRepo(branch, path, commit string) error {
-	// Change directory to the repository path
-	cmd := exec.Command("git", "-C", path, "pull", "origin", branch, "--force")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to pull the repo: %v", err)
+// UpdateGitRepo pulls the latest changes from the remote branch and checks out to a specific commit if provided
+func UpdateGitRepo(commit string, wt *git.Worktree, opts *git.PullOptions) error {
+	err := wt.Pull(opts)
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("failed to pull the latest changes: %v", err)
 	}
 
-	// If commit is not empty, checkout to the specified commit
+	// If a specific commit is provided, checkout that commit
 	if commit != "" {
-		cmd = exec.Command("git", "-C", path, "checkout", commit, "--force")
-		if err := cmd.Run(); err != nil {
+		err = wt.Checkout(&git.CheckoutOptions{
+			Hash:  plumbing.NewHash(commit),
+			Force: true,
+		})
+		if err != nil {
 			return fmt.Errorf("failed to checkout to commit %s: %v", commit, err)
 		}
 	}
-
 	return nil
 }
 
+// GetLatestCommitID returns the latest commit ID of the given repository
 func GetLatestCommitID(filePath string) (string, error) {
 	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return "", err
 	}
 
-	cmd := exec.Command("git", "log", "-1", "--format=%H")
-	cmd.Dir = absPath
-
-	out, err := cmd.Output()
+	// Open the repository
+	repo, err := git.PlainOpen(absPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to get the latest commit ID: %v", err)
+		return "", fmt.Errorf("failed to open the repo: %v", err)
 	}
 
-	return strings.TrimSpace(string(out)), nil
+	// Get the HEAD reference
+	ref, err := repo.Head()
+	if err != nil {
+		return "", fmt.Errorf("failed to get the HEAD reference: %v", err)
+	}
+
+	return ref.Hash().String(), nil
 }

@@ -303,7 +303,7 @@ func (rg *RGOGenerator) cloneRemoteRepo(repo config.IDLRepo, path, commit string
 	var id string
 	var err error
 
-	err = utils.CloneGitRepo(repo.GitUrl, repo.Branch, path, commit)
+	err = rg.CloneGitRepo(repo.GitUrl, repo.Branch, path, commit)
 	if err != nil {
 		return "", err
 	}
@@ -320,7 +320,7 @@ func (rg *RGOGenerator) updateRemoteRepo(repo config.IDLRepo, path, commit strin
 	var id string
 	var err error
 
-	err = utils.UpdateGitRepo(repo.Branch, path, commit)
+	err = rg.UpdateGitRepo(repo.Branch, path, commit)
 	if err != nil {
 		return "", err
 	}
