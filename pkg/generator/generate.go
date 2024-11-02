@@ -86,7 +86,7 @@ func (rg *RGOGenerator) Run() {
 	}()
 
 	defer func() {
-		err := rg.sendNotification(consts.MethodRGORestartLSP, nil)
+		err := rg.SendNotification(consts.MethodRGORestartLSP, nil)
 		if err != nil {
 			rlog.Errorf("Failed to restart LSP: %v", err)
 			return
@@ -120,16 +120,9 @@ func (rg *RGOGenerator) Run() {
 		rlog.Errorf("Failed to send notification stop progress: %v", err)
 		return
 	}
-
-	rlog.Info("RGO executed successfully")
-	err = rg.sendNotification(consts.MethodRGOWindowShowInfo, []byte(consts.RGOExecuteSuccessfully))
-	if err != nil {
-		rlog.Errorf("Failed to send notification executed successfully: %v", err)
-		return
-	}
 }
 
-func (rg *RGOGenerator) sendNotification(method string, params json.RawMessage) error {
+func (rg *RGOGenerator) SendNotification(method string, params json.RawMessage) error {
 	err := rg.LspServer.SendNotification(method, params)
 	if err != nil {
 		return err
@@ -210,13 +203,13 @@ func (rg *RGOGenerator) processRepo(repo config.IDLRepo, changedRepoCommit *sync
 func (rg *RGOGenerator) generateSrcCode() {
 	changedRepoCommit := rg.changedRepoCommit
 
-	if !rg.isGoPackagesDriver {
-		wd, err := os.Getwd()
-		if err != nil {
-			rlog.Errorf("Failed to get current working directory: %v", err)
-			return
-		}
+	wd, err := os.Getwd()
+	if err != nil {
+		rlog.Errorf("Failed to get current working directory: %v", err)
+		return
+	}
 
+	if !rg.isGoPackagesDriver {
 		exist, err := utils.FileExistsInPath(wd, consts.GoWork)
 		if err != nil {
 			rlog.Errorf("Failed to check if go.work exists in path %s: %v", wd, err)
@@ -250,6 +243,24 @@ func (rg *RGOGenerator) generateSrcCode() {
 					}
 				}
 			}
+			defer func() {
+				for _, idl := range rg.rgoConfig.IDLs {
+					srcPath := filepath.Join(rg.RGOBasePath, consts.RepoPath, idl.FormatServiceName)
+					relPath, err := filepath.Rel(wd, srcPath)
+					if err != nil {
+						rlog.Errorf("Failed to get relative module: %v", err)
+					}
+					err = utils.AddModuleToGoWork(relPath)
+					if err != nil {
+						rlog.Errorf("Failed to add module to go.work: %v", err)
+					}
+				}
+
+				err = utils.RunGoWorkSync()
+				if err != nil {
+					rlog.Errorf("Failed to run go work sync: %v", err)
+				}
+			}()
 		}
 	}
 
@@ -271,21 +282,6 @@ func (rg *RGOGenerator) generateSrcCode() {
 			if err != nil {
 				rlog.Errorf("Failed to generate rgo code for %s: %v", idl.ServiceName, err)
 				return err
-			}
-
-			if !rg.isGoPackagesDriver {
-				rlog.Info(srcPath)
-				err = utils.AddModuleToGoWork(srcPath)
-				if err != nil {
-					rlog.Errorf("Failed to add module to go.work: %v", err)
-					return err
-				}
-
-				err = utils.RunGoWorkSync()
-				if err != nil {
-					rlog.Errorf("Failed to run go work sync: %v", err)
-					return err
-				}
 			}
 			return nil
 		})
@@ -364,7 +360,7 @@ func (rg *RGOGenerator) NotifyRGOProgressStart(id, message string) error {
 	if err != nil {
 		return err
 	}
-	err = rg.sendNotification(consts.MethodRGOProgress, msg)
+	err = rg.SendNotification(consts.MethodRGOProgress, msg)
 	if err != nil {
 		return err
 	}
@@ -380,7 +376,7 @@ func (rg *RGOGenerator) NotifyRGOProgressStop(id string) error {
 	if err != nil {
 		return err
 	}
-	err = rg.sendNotification(consts.MethodRGOProgress, msg)
+	err = rg.SendNotification(consts.MethodRGOProgress, msg)
 	if err != nil {
 		return err
 	}

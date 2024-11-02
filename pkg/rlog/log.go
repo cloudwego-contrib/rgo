@@ -71,7 +71,7 @@ func InitLogger(logPath string, server *lsp.Server) {
 }
 
 func Debug(s string, fields ...zap.Field) {
-	logger.Info(s, fields...)
+	logger.Debug(s, fields...)
 }
 
 func Info(s string, fields ...zap.Field) {

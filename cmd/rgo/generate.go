@@ -144,7 +144,11 @@ func GenerateRGOCode() error {
 					}
 
 					if isGoPackagesDriver {
-						err = utils.AddModuleToGoWork(path)
+						relPath, err := filepath.Rel(wd, path)
+						if err != nil {
+							return err
+						}
+						err = utils.AddModuleToGoWork(relPath)
 						if err != nil {
 							return err
 						}

@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/cloudwego-contrib/rgo/pkg/rlog"
+	"go.uber.org/zap"
+
 	"github.com/cloudwego-contrib/rgo/pkg/consts"
 
 	"github.com/cloudwego/thriftgo/parser"
@@ -34,7 +37,6 @@ func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, i
 		"-thrift", "gen_setter=false",
 		"-thrift", "no_default_serdes",
 		"-thrift", "no_fmt",
-		idlPath,
 	}
 
 	args := []string{
@@ -50,6 +52,8 @@ func (rg *RGOGenerator) GenRgoBaseCode(module, serviceName, formatServiceName, i
 	for _, customArg := range customArgs {
 		args = append(args, fmt.Sprintf("--%s", consts.KitexArgsFlag), customArg)
 	}
+
+	rlog.Debug("generate rgo base code", zap.Any("args", args))
 
 	cmd := exec.Command("rgo", args...)
 

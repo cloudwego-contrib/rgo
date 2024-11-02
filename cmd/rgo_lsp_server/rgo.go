@@ -74,6 +74,13 @@ func RGORun(ctx context.Context, server *lsp.Server) {
 		WatchConfig(g, ctx)
 	}()
 
+	rlog.Info("RGO started successfully")
+	err := g.SendNotification(consts.MethodRGOWindowShowInfo, []byte(consts.RGOStartSuccessfully))
+	if err != nil {
+		rlog.Errorf("Failed to send notification executed successfully: %v", err)
+		return
+	}
+
 	g.Run()
 }
 
