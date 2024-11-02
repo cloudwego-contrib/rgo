@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package utils
+package generator
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
-	"testing"
 
+	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -30,28 +31,26 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func TestCloneGitRepo(t *testing.T) {
+func (rg *RGOGenerator) CloneGitRepo(repoURL, branch, path, commit string) error {
 	var auth transport.AuthMethod
-
-	repoURL := "https://github.com/cloudwego/hertz.git"
 
 	if strings.HasPrefix(repoURL, "git@") {
 		// SSH authentication
 		currentUser, err := user.Current()
 		if err != nil {
-			t.Fatalf("failed to get the current user: %v", err)
+			return fmt.Errorf("failed to get the current user: %v", err)
 		}
 
 		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
 
 		sshKey, err := os.ReadFile(sshKeyPath)
 		if err != nil {
-			t.Fatalf("failed to read SSH key: %v", err)
+			return fmt.Errorf("failed to read SSH key: %v", err)
 		}
 
 		signer, err := ssh.ParsePrivateKey(sshKey)
 		if err != nil {
-			t.Fatalf("failed to parse SSH key: %v", err)
+			return fmt.Errorf("failed to parse SSH key: %v", err)
 		}
 
 		auth = &gitssh.PublicKeys{User: "git", Signer: signer}
@@ -60,35 +59,30 @@ func TestCloneGitRepo(t *testing.T) {
 	// Clone the repository using the appropriate authentication method
 	cloneOptions := &git.CloneOptions{
 		URL:           repoURL,
-		ReferenceName: plumbing.NewBranchReferenceName("develop"),
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
 		SingleBranch:  true,
 		Auth:          auth,
 	}
 
-	err := CloneGitRepo("./tmp/hertz", "", cloneOptions)
+	err := utils.CloneGitRepo(path, commit, cloneOptions)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func TestUpdateGitRepo(t *testing.T) {
-	_, err := os.Stat("./tmp/hertz")
+// UpdateGitRepo pulls the latest changes from the remote branch and checks out to a specific commit if provided
+func (rg *RGOGenerator) UpdateGitRepo(branch, path, commit string) error {
+	// Open the repository from the specified path
+	repo, err := git.PlainOpen(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			TestCloneGitRepo(t)
-		}
-		t.Fatal(err)
-	}
-
-	repo, err := git.PlainOpen("./tmp/hertz")
-	if err != nil {
-		t.Fatalf("failed to open the repo: %v", err)
+		return fmt.Errorf("failed to open the repo: %v", err)
 	}
 
 	// Get the remote URL to determine whether SSH or HTTP is being used
 	remote, err := repo.Remote("origin")
 	if err != nil {
-		t.Fatalf("failed to get the remote: %v", err)
+		return fmt.Errorf("failed to get the remote: %v", err)
 	}
 	remoteURL := remote.Config().URLs[0]
 
@@ -99,19 +93,19 @@ func TestUpdateGitRepo(t *testing.T) {
 		// SSH authentication
 		currentUser, err := user.Current()
 		if err != nil {
-			t.Fatal()
+			return fmt.Errorf("failed to get the current user: %v", err)
 		}
 
 		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
 
 		sshKey, err := os.ReadFile(sshKeyPath)
 		if err != nil {
-			t.Fatalf("failed to read SSH key: %v", err)
+			return fmt.Errorf("failed to read SSH key: %v", err)
 		}
 
 		signer, err := ssh.ParsePrivateKey(sshKey)
 		if err != nil {
-			t.Fatalf("failed to parse SSH key: %v", err)
+			return fmt.Errorf("failed to parse SSH key: %v", err)
 		}
 
 		auth = &gitssh.PublicKeys{User: "git", Signer: signer}
@@ -120,34 +114,23 @@ func TestUpdateGitRepo(t *testing.T) {
 	// Get the worktree to perform git operations
 	wt, err := repo.Worktree()
 	if err != nil {
-		t.Fatalf("failed to get the worktree: %v", err)
+		return fmt.Errorf("failed to get the worktree: %v", err)
 	}
 
 	// Pull the latest changes with or without SSH authentication
 	pullOptions := &git.PullOptions{
 		RemoteName:    "origin",
-		ReferenceName: plumbing.NewBranchReferenceName("develop"),
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
 		Force:         true,
-		Auth:          auth,
+	}
+	if auth != nil {
+		pullOptions.Auth = auth
 	}
 
-	err = UpdateGitRepo("", wt, pullOptions)
+	err = utils.UpdateGitRepo(commit, wt, pullOptions)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-}
 
-func TestGetLatestCommitID(t *testing.T) {
-	_, err := os.Stat("./tmp/hertz")
-	if err != nil {
-		if os.IsNotExist(err) {
-			TestCloneGitRepo(t)
-		}
-		t.Fatal(err)
-	}
-	s, err := GetLatestCommitID("./tmp/hertz")
-	t.Log(s)
-	if err != nil {
-		t.Fatal(err)
-	}
+	return nil
 }
