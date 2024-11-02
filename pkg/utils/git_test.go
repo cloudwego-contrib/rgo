@@ -18,11 +18,54 @@ package utils
 
 import (
 	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"golang.org/x/crypto/ssh"
 )
 
 func TestCloneGitRepo(t *testing.T) {
-	err := CloneGitRepo("https://github.com/cloudwego/hertz.git", "develop", "./tmp/hertz", "")
+	var auth transport.AuthMethod
+
+	repoURL := "https://github.com/cloudwego/hertz.git"
+
+	if strings.HasPrefix(repoURL, "git@") {
+		// SSH authentication
+		currentUser, err := user.Current()
+		if err != nil {
+			t.Fatalf("failed to get the current user: %v", err)
+		}
+
+		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
+
+		sshKey, err := os.ReadFile(sshKeyPath)
+		if err != nil {
+			t.Fatalf("failed to read SSH key: %v", err)
+		}
+
+		signer, err := ssh.ParsePrivateKey(sshKey)
+		if err != nil {
+			t.Fatalf("failed to parse SSH key: %v", err)
+		}
+
+		auth = &gitssh.PublicKeys{User: "git", Signer: signer}
+	}
+
+	// Clone the repository using the appropriate authentication method
+	cloneOptions := &git.CloneOptions{
+		URL:           repoURL,
+		ReferenceName: plumbing.NewBranchReferenceName("develop"),
+		SingleBranch:  true,
+		Auth:          auth,
+	}
+
+	err := CloneGitRepo("./tmp/hertz", "", cloneOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +79,59 @@ func TestUpdateGitRepo(t *testing.T) {
 		}
 		t.Fatal(err)
 	}
-	err = UpdateGitRepo("develop", "./tmp/hertz", "")
+
+	repo, err := git.PlainOpen("./tmp/hertz")
+	if err != nil {
+		t.Fatalf("failed to open the repo: %v", err)
+	}
+
+	// Get the remote URL to determine whether SSH or HTTP is being used
+	remote, err := repo.Remote("origin")
+	if err != nil {
+		t.Fatalf("failed to get the remote: %v", err)
+	}
+	remoteURL := remote.Config().URLs[0]
+
+	// Set up SSH authentication if the remote URL uses SSH
+	var auth transport.AuthMethod
+
+	if strings.HasPrefix(remoteURL, "git@") {
+		// SSH authentication
+		currentUser, err := user.Current()
+		if err != nil {
+			t.Fatal()
+		}
+
+		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
+
+		sshKey, err := os.ReadFile(sshKeyPath)
+		if err != nil {
+			t.Fatalf("failed to read SSH key: %v", err)
+		}
+
+		signer, err := ssh.ParsePrivateKey(sshKey)
+		if err != nil {
+			t.Fatalf("failed to parse SSH key: %v", err)
+		}
+
+		auth = &gitssh.PublicKeys{User: "git", Signer: signer}
+	}
+
+	// Get the worktree to perform git operations
+	wt, err := repo.Worktree()
+	if err != nil {
+		t.Fatalf("failed to get the worktree: %v", err)
+	}
+
+	// Pull the latest changes with or without SSH authentication
+	pullOptions := &git.PullOptions{
+		RemoteName:    "origin",
+		ReferenceName: plumbing.NewBranchReferenceName("develop"),
+		Force:         true,
+		Auth:          auth,
+	}
+
+	err = UpdateGitRepo("", wt, pullOptions)
 	if err != nil {
 		t.Fatal(err)
 	}

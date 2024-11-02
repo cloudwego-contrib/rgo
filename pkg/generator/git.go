@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strings"
 
 	"github.com/cloudwego-contrib/rgo/pkg/utils"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"golang.org/x/crypto/ssh"
 )
@@ -34,27 +34,14 @@ import (
 func (rg *RGOGenerator) CloneGitRepo(repoURL, branch, path, commit string) error {
 	var auth transport.AuthMethod
 
-	// Determine if the repoURL uses HTTP(S) or SSH
-	if strings.HasPrefix(repoURL, "http://") || strings.HasPrefix(repoURL, "https://") {
-		// HTTP(S) authentication - you can prompt for credentials or use token
-		auth = &http.BasicAuth{
-			Username: rg.rgoConfig.Auth.Username,
-			Password: rg.rgoConfig.Auth.Password,
-		}
-	} else if strings.HasPrefix(repoURL, "git@") {
+	if strings.HasPrefix(repoURL, "git@") {
 		// SSH authentication
 		currentUser, err := user.Current()
 		if err != nil {
 			return fmt.Errorf("failed to get the current user: %v", err)
 		}
 
-		var sshKeyPath string
-
-		if rg.rgoConfig.Auth.SSHKey != "" {
-			sshKeyPath = rg.rgoConfig.Auth.SSHKey
-		} else {
-			sshKeyPath = fmt.Sprintf("%s/.ssh/id_rsa", currentUser.HomeDir)
-		}
+		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
 
 		sshKey, err := os.ReadFile(sshKeyPath)
 		if err != nil {
@@ -102,26 +89,14 @@ func (rg *RGOGenerator) UpdateGitRepo(branch, path, commit string) error {
 	// Set up SSH authentication if the remote URL uses SSH
 	var auth transport.AuthMethod
 
-	if strings.HasPrefix(remoteURL, "http://") || strings.HasPrefix(remoteURL, "https://") {
-		// HTTP(S) authentication - you can prompt for credentials or use token
-		auth = &http.BasicAuth{
-			Username: rg.rgoConfig.Auth.Username,
-			Password: rg.rgoConfig.Auth.Password,
-		}
-	} else if strings.HasPrefix(remoteURL, "git@") {
+	if strings.HasPrefix(remoteURL, "git@") {
 		// SSH authentication
 		currentUser, err := user.Current()
 		if err != nil {
 			return fmt.Errorf("failed to get the current user: %v", err)
 		}
 
-		var sshKeyPath string
-
-		if rg.rgoConfig.Auth.SSHKey != "" {
-			sshKeyPath = rg.rgoConfig.Auth.SSHKey
-		} else {
-			sshKeyPath = fmt.Sprintf("%s/.ssh/id_rsa", currentUser.HomeDir)
-		}
+		sshKeyPath := filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
 
 		sshKey, err := os.ReadFile(sshKeyPath)
 		if err != nil {
